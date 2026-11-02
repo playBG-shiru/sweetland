@@ -2180,7 +2180,7 @@ function log(msg){ G.log.unshift(msg); if (G.log.length > 400) G.log.length = 40
 function resText(r){ return Object.entries(r||{}).filter(([,v])=>v).map(([k,v])=>`${RN[k]} ${v}`).join(', ') || '없음'; }
 function cardCost(p, c){
   if (!c || !c.cost) return c ? c.cost : null;
-  const disc = (c.discTag ? tagCount(p, c.discTag) : 0) + (aidFixed(p, 'cardGold') ? 3 : 0);
+  const disc = (c.discTag ? tagCount(p, c.discTag) : 0) + (aidFixed(p, 'cardGold') ? 3 : 0) + (p.skills && p.skills.includes(110) && c.discTag !== 'brownie' ? tagCount(p, 'brownie') : 0);   // 브라우니 장인
   if (!disc) return c.cost;
   const cost = {...c.cost};
   cost.gold = Math.max(0, (cost.gold || 0) - disc);
@@ -5228,7 +5228,7 @@ function tobPanel(){
   </div>
   `;
 }
-function render(){ if (G && G.phase !== 'setup' && !UI.foldInit) { UI.foldInit = true; if (UI.overview == null) UI.overview = true; if (SMALL_SCREEN()) { UI.folded = UI.folded || {}; MOBILE_FOLD.forEach(k => { if (UI.folded[k] == null) UI.folded[k] = true; }); UI.overview = true; } } renderRaw(); try { document.body.classList.toggle('ovon', !!(G && G.phase !== 'setup' && ovOn())); } catch(e){} if (G && G.phase !== 'setup') { decorateFolds(); ovFoldInit(); } turnNotify(); chatSync(); }
+function render(){ if (G && G.phase !== 'setup' && !UI.foldInit) { UI.foldInit = true; if (UI.overview == null) UI.overview = true; if (SMALL_SCREEN()) { UI.folded = UI.folded || {}; MOBILE_FOLD.forEach(k => { if (UI.folded[k] == null) UI.folded[k] = true; }); UI.overview = true; } } const _hs = document.querySelector('.ovhand .hand'), _sl = _hs ? _hs.scrollLeft : 0; renderRaw(); if (_sl > 0) { const _rs = () => { const h = document.querySelector('.ovhand .hand'); if (h && h.scrollLeft !== _sl) h.scrollLeft = _sl; }; _rs(); setTimeout(_rs, 0); setTimeout(_rs, 300); setTimeout(_rs, 950); } try { document.body.classList.toggle('ovon', !!(G && G.phase !== 'setup' && ovOn())); } catch(e){} if (G && G.phase !== 'setup') { decorateFolds(); ovFoldInit(); } turnNotify(); chatSync(); }
 function foldKey(h){
   if (h.classList.contains('sheet-head')) return '캐릭터';
   const h2 = h.querySelector('h2'); let s = h2 ? (h2.childNodes && h2.childNodes[0] ? h2.childNodes[0].textContent : h2.textContent) : '패널';
