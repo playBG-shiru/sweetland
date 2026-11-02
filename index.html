@@ -900,7 +900,7 @@ img{-webkit-user-drag:none}
 .ov .panel.ovcollapsed::before{content:attr(data-ttl); display:block; font-size:12px; font-weight:700; color:var(--muted); line-height:26px}
 .ovhead{padding:6px 34px 6px 10px !important; gap:6px}
 .ovhead .ovchar{font-size:14px} .ovhead small{font-size:10.5px} .ovhead .vp b{font-size:17px} .ovhead .vp small{font-size:9.5px}
-.ov > .ovhead.ovcollapsed{border-top-width:5px}
+.ov .ovhead.ovcollapsed{border-top-width:5px}
 .ovcharb{border:0; background:none; padding:0; color:inherit; cursor:pointer; text-align:left; text-decoration:underline dotted; text-underline-offset:3px}
 .ovcharb small{font-size:11px; color:var(--accent)}
 .charsheet.cability{display:flex; flex-direction:column; gap:6px; font-size:13px; line-height:1.4}
@@ -916,7 +916,7 @@ img{-webkit-user-drag:none}
 .odr .ic{height:17px} .odr b{font-size:14px} .odr i{font-style:normal; font-size:10.5px; color:var(--muted)}
 body.ovon{padding-bottom:54px !important} body.ovon .chatbox{bottom:60px !important}
 @media (max-width:520px){ .ovdock{gap:2px; padding-left:3px; padding-right:3px} .odr{padding:3px 5px; gap:2px; font-size:12px} .odr b{font-size:13px} .odr .ic{height:15px} .odr i{display:inline; font-size:9px} }
-.ov > .ovstats{padding:4px 8px !important; margin-top:-6px; border-top-left-radius:0; border-top-right-radius:0}
+.ov .ovstats{padding:4px 8px !important; margin-top:-6px; border-top-left-radius:0; border-top-right-radius:0}
 .ovstats .stats{display:flex; flex-wrap:wrap; gap:2px 12px; font-size:11.5px; margin:0}
 @media (max-width:700px){ .ovtr{grid-template-columns:16px 1fr auto} .ovtr .ic{height:14px} .ovmt .ovtr .ic{height:14px} }
 .ovhead{flex-wrap:wrap}
@@ -926,7 +926,7 @@ body.ovon .ptab{padding:2px 8px; font-size:12px} body.ovon .ptab em{font-size:9.
 .ov.navoff .ovnav .ovnb{display:none}
 .ovnavt{flex:1 1 100%; border:1px solid var(--line); background:var(--surface); border-radius:10px; padding:5px 8px; font-size:12px; font-weight:700; color:var(--fg); cursor:pointer}
 @media (min-width:701px){ .ovnav{flex-wrap:wrap} .ovnavt{flex:0 0 auto} }
-.ov > .panel.ovnav{padding:8px !important} .ov > .panel.ovnav.ovcollapsed{padding:0 8px !important}
+.ov .panel.ovnav{padding:8px !important} .ov .panel.ovnav.ovcollapsed{padding:0 8px !important}
 @media (max-width:700px){ .ovhand .card{zoom:.7; flex:0 0 112px !important; width:112px !important; min-width:0 !important; max-width:none !important} .ovhand .hand{gap:4px} }
 @media (max-width:700px){ .ovareas{gap:4px} .ovarea{min-height:0 !important; padding:3px 5px 4px !important; gap:1px !important} .ovarea .ovnm{font-size:11.5px} .ovarea .ovslots{margin-top:2px} .ovarea .ovslots i{width:9px; height:9px} }
 @keyframes skblink{0%,100%{box-shadow:0 0 0 0 transparent; background-color:var(--surface)} 50%{box-shadow:0 0 0 3px #20b2a0, 0 0 14px #20b2a0; background-color:#dff7f2}}
@@ -1022,17 +1022,14 @@ body.ovon .ptab{padding:2px 8px; font-size:12px} body.ovon .ptab em{font-size:9.
 
 @media (min-width:1100px){
  body.ovon .flow{max-width:1560px}
- .ov{grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto auto auto minmax(0,1fr) auto; column-gap:12px; align-items:start}
- .ov > *{grid-column:1}
- .ov > .ovmt{grid-column:2; grid-row:1 / span 4; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) !important}
- .ov > .ovhand{align-self:stretch}
+ .ov{grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:12px; align-items:start}
+ .ovL,.ovR{display:grid; gap:10px; align-content:start; min-width:0; grid-template-columns:minmax(0,1fr)}
+ .ov > .ovmt, .ovR > .ovmt{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) !important}
  .ovmt .ovtr .ic{height:20px !important; max-width:26px}
  .ovmt .ovtr{padding:1px 2px !important}
  .ovmt .ovtracks{gap:0 !important}
- .ov > .ovaid{grid-column:1; grid-row:5}
- .ov > .panel:has(> .ovareas){grid-column:2; grid-row:5}
  .ovareas{grid-template-columns:repeat(var(--ac,6),minmax(0,1fr))}
- .ov > .panel:has(> .ovareas){padding-top:24px !important}
+ .ov .panel:has(> .ovareas){padding-top:24px !important}
  .ovareas .ovarea{display:flex; flex-direction:column; align-items:stretch}
  .ovareas .ovid{position:static; order:-1; align-self:flex-end}
  .ovareas .ovnm{padding-right:0 !important; max-width:none !important; margin:0 !important; font-size:11px; overflow-wrap:normal; word-break:keep-all}
@@ -1040,16 +1037,16 @@ body.ovon .ptab{padding:2px 8px; font-size:12px} body.ovon .ptab em{font-size:9.
 }
 
 @media (min-width:0px){
- .ov > .ovhead{border-bottom-left-radius:0 !important; border-bottom-right-radius:0 !important; border-bottom:0 !important; padding-bottom:2px !important}
- .ov > .ovres{margin-top:-10px; border-top-left-radius:0 !important; border-top-right-radius:0 !important; border-top:0 !important; box-shadow:none; padding:2px 30px 8px 10px !important}
- .ov > .ovres.ovcollapsed{margin-top:-10px}
+ .ov .ovhead{border-bottom-left-radius:0 !important; border-bottom-right-radius:0 !important; border-bottom:0 !important; padding-bottom:2px !important}
+ .ov .ovres{margin-top:-10px; border-top-left-radius:0 !important; border-top-right-radius:0 !important; border-top:0 !important; box-shadow:none; padding:2px 30px 8px 10px !important}
+ .ov .ovres.ovcollapsed{margin-top:-10px}
  .ov .ovres .resbar{margin:0; gap:6px; align-items:stretch}
  .ov .ovres .res{display:flex; flex-direction:row; align-items:center; justify-content:center; gap:6px; padding:3px 6px !important}
  .ov .ovres .res .rv{display:inline-flex; align-items:center; gap:3px}
  .ov .ovres .res .rv .ic.big{height:16px} .ov .ovres .res .rv b{font-size:14px}
  .ov .ovres .res .ri{display:inline-flex; align-items:center; gap:2px; margin:0; opacity:.9}
 }
-@media (max-width:700px){ .ov .ovres .res .ri small{display:none} .ov > .ovres{padding:2px 28px 6px 6px !important} .ov .ovres .resbar{gap:3px} .ov .ovres .res{gap:2px; padding:3px 2px !important} .ov .ovres .res .rv .ic.big{height:14px} .ov .ovres .res .rv b{font-size:13px} .ov .ovres .res .ri .ic{height:10px} .ov .ovres .res .ri b{font-size:10px} }
+@media (max-width:700px){ .ov .ovres .res .ri small{display:none} .ov .ovres{padding:2px 28px 6px 6px !important} .ov .ovres .resbar{gap:3px} .ov .ovres .res{gap:2px; padding:3px 2px !important} .ov .ovres .res .rv .ic.big{height:14px} .ov .ovres .res .rv b{font-size:13px} .ov .ovres .res .ri .ic{height:10px} .ov .ovres .res .ri b{font-size:10px} }
 
 .odr{padding:5px 11px; gap:4px; font-size:15px} .odr .ic{height:21px} .odr b{font-size:17px} .odr i{font-size:12px}
 body.ovon{padding-bottom:66px !important} body.ovon .chatbox{bottom:72px !important}
@@ -1070,7 +1067,6 @@ body.ovon{padding-bottom:66px !important} body.ovon .chatbox{bottom:72px !import
  .ovaidt{flex:0 0 24px !important; min-height:24px} .ovaidn{font-size:11px}
 }
 
-@media (min-width:701px){ .ov > .ovaid, .ov > .panel:has(> .ovareas){align-self:start !important} }
 
 #map-panel{position:relative}
 .mapzoomb{position:absolute; left:8px; top:8px; z-index:3; width:22px; height:22px; padding:0; border-radius:6px; border:1px solid var(--line); background:var(--surface); color:var(--fg); font-size:13px; line-height:1; cursor:pointer; opacity:.9}
@@ -1078,15 +1074,43 @@ body.ovon{padding-bottom:66px !important} body.ovon .chatbox{bottom:72px !import
 .ovsheet-box:has(.mapwrap){max-width:98vw; width:98vw; max-height:97vh; max-height:97dvh}
 .ovsheet-box .mapwrap .map{max-width:min(96vw, calc((97vh - 130px) * 1.3)); max-width:min(96vw, calc((97dvh - 130px) * 1.3)); min-width:0}
 @media (min-width:1100px){
- .ov > .ovmt{grid-template-columns:minmax(0,2.1fr) minmax(0,1fr) !important}
+ .ovR > .ovmt{grid-template-columns:minmax(0,2.1fr) minmax(0,1fr) !important}
 }
-@media (min-width:701px){ .ovmt .ovtr{grid-template-columns:30px minmax(50px,100px) auto !important} }
+@media (min-width:701px){ .ovmt .ovtr{grid-template-columns:26px minmax(8px,100px) auto !important; column-gap:6px !important} .ovmt .ovtr .ic{max-width:24px !important} }
 
 body.ovon{padding-bottom:96px !important}
 
 .ovclk .ok{color:var(--mint,#2f9f8a); font-weight:700}
 
 .ovhead .ovclk,.ovhead .ovsub{display:block; line-height:1.25; margin-top:1px} .ovhead .ovsub{margin-top:0}
+
+.ov .ovtags{gap:4px; margin:6px 0 0}
+.ov .ovtags .tgc{min-height:24px; padding:2px; border-radius:7px}
+.ov .ovtags .tgc .tg{--th:18px; max-width:none}
+.ov .ovtags .tgc b{font-size:14px}
+@media (max-width:700px){ .ov .ovtags .tgc .tg{--th:15px} .ov .ovtags .tgc b{font-size:12px} .ov .ovres{padding-right:28px !important} }
+
+.ov .ovhead > div:first-child{flex:1 1 0; min-width:0} .ov .ovhead .vp{flex:0 0 auto}
+.ov .ovhead .ovhstats{flex-basis:100%}
+
+@media (min-width:701px){
+ #map-panel{resize:horizontal !important; overflow:visible !important; min-width:260px}
+ #map-panel .mapwrap{overflow:visible}
+ .ov .ovmt #map-panel .map{max-width:none; min-width:0; width:100%}
+ .ov .ovmt{grid-template-columns:minmax(0,2.1fr) minmax(190px,1fr) !important}
+ .ov .ovmt[style*="--mw"]{grid-template-columns:minmax(0,min(var(--mw), calc(100% - 200px))) minmax(190px,1fr) !important}
+ #map-panel{max-width:100%}
+}
+@media (min-width:1100px){ .ov[style*="--rw"]{grid-template-columns:minmax(0,1fr) minmax(0,min(var(--rw), calc(100% - 380px))) !important} }
+
+.drawer:has(.logtabs ~ .final){width:min(900px,100%); overflow-y:auto}
+.drawer .logtabs{margin:6px 0}
+
+.ovL,.ovR{display:contents}
+.ov .ovhead{order:1} .ov .ovres{order:2} .ov .ovnav{order:3} .ov .ovhand{order:4} .ov .panel:has(> .ovareas){order:5} .ov .ovmt{order:6} .ov .ovaid{order:7}
+@media (min-width:1100px){ .ovL,.ovR{display:grid} .ovL > *,.ovR > *{order:0 !important} }
+
+@media (min-width:1100px){ .ov .ovR{margin-top:-37px; position:relative; z-index:1} }
 </style>
 <div id="app"></div>
 <script>
@@ -2285,6 +2309,7 @@ const effsText = effs => (effs||[]).map(effText).join(' · ');
 
 // ---------- 새 게임 ----------
 function newGame(cfg, opts){
+  if (cfg.some(c => c.ai === 'auto')) { const lvl = autoLevel(cfg.filter(c => !c.ai).map(c => c.name)); cfg = cfg.map(c => c.ai === 'auto' ? {...c, ai:lvl} : c); }
   EPOCH++; DRIVING = false; UI.busy = false; UI.prompt = null; UI.nested = false; UI.handoffSeen = null; UI.overview = true; UI.ovNav = false;   // 이전 게임의 진행 상태를 모두 풀고 시작 (기본 화면은 한눈에 보기)
   const n = cfg.length;
   let deck = [];
@@ -2548,7 +2573,7 @@ function ask(pr){ return new Promise((res, rej) => {
   if (G.mode !== 'online' || controls(G.cur)) UI.view = G.cur;
   render();
 }); }
-function answer(v){ const pr = UI.prompt; UI.prompt = null; pr.res(v); }
+function answer(v){ const pr = UI.prompt; UI.prompt = null; plcRecord(pr, v); pr.res(v); }
 function cancelPrompt(){ const pr = UI.prompt; if (!pr || pr.noCancel || G.phase !== 'action') return; UI.prompt = null; pr.rej(CANCEL); }
 async function choose(text, options, extra={}){ return ask({type:'choice', text, options, ...extra}); }
 
@@ -3142,7 +3167,7 @@ function uselessReason(p, effs){
   }
   return null;
 }
-function useArea(pi, id){ ACT_INFO = {kind:'area', id, name:AREAS[id] && AREAS[id].name};
+function useArea(pi, id){ decRecord(pi, id); ACT_INFO = {kind:'area', id, name:AREAS[id] && AREAS[id].name};
   const p = P(pi), a = AREAS[id], st = areaState(id);
   if (!st.open) return toast(`${id} 구역은 ${a.open}라운드에 열립니다`);
   if (st.full) return toast('빈 행동 칸이 없습니다');
@@ -3627,7 +3652,7 @@ document.addEventListener('submit', e => { if (e.target && e.target.id === 'auth
 //  스위트랜드 — AI 플레이어 (초보 / 중급 / 고급)
 //  초보: 가능한 행동 중 무작위 · 중급: 단순 점수 계산(약간의 무작위) · 고급: 점수 계산 + 자원 변환·패스 판단
 // ============================================================
-const AI_LEVELS = {beginner:'초보', mid:'중급', adv:'고급'};
+const AI_LEVELS = {beginner:'초급', mid:'중급', adv:'고급', auto:'맞춤'};
 const AI_DELAY = () => (G && G.players.every(p => p.ai) ? 40 : 420);
 const isAI = pi => !!(G && P(pi) && P(pi).ai);
 const aiLv = pi => P(pi).ai;
@@ -3646,7 +3671,7 @@ const AIW = {};
 // vpBonus: 패스할 때마다 AI에게 주는 승점 (인원별) — 평균 점수가 초급≈140 · 중급≈220 · 고급≈300이 되도록 시뮬레이션으로 맞춤
 const AIP = {bonus:{}, vpBonus:{beginner:{2:30, 3:31, 4:31}, mid:{2:30, 3:33, 4:35}, adv:{2:43, 3:44, 4:45}}, portW:{mid:12, adv:20}, portDist:{mid:1.2, adv:2}, handPen:{adv:0.5}, th:{adv:0.8, mid:0.3}, cardBonus:0, autoVal:0, clock:1, charFree:1, portLv:{mid:1, adv:1},
   strat:{mid:1, adv:1}, dz:{tile:6, road:8, dist:2.5}, clockW:3, wonderFood:0, clockCard:2, incW:1.5, goalW:5, reserve:1, nonGoalMul:0.5, prospOverride:1, clockProp:6, incPickRound:2, incPickW:1, wonderCross:4.5,
-  uv:{tile:3, road:3, food:3, ind:2.5, inc:2.5}, openBonus:0, learnW:1.5, incPlanW:2, passCardK:0.8};   // uv: 사용자 가치표 (땅·다리·빵 3 / 산업 2.5 / 자원 수입 2.5) — 고급 AI만 사용
+  uv:{tile:3, road:3, food:3, ind:2.5, inc:2.5}, openBonus:0, learnW:1.5, decW:2.5, cardK:5.5, plcW:2.5, incPlanW:2, passCardK:0.8};   // uv: 사용자 가치표 (땅·다리·빵 3 / 산업 2.5 / 자원 수입 2.5) — 고급 AI만 사용
 const uvCur = () => (G && P(G.cur) && P(G.cur).ai === 'adv') ? AIP.uv : null;
 // INC_ROUND: 라운드별 수입 가치 가중 — 사람 기록(4라운드 기본 자원 수입 31 vs AI 11~17)을 보고 1~3라운드 수입을 더 높게 침
 const AI_K = 0.8, INC_ROUND = [0, 1.7, 1.3, 0.85, 0.4, 0];
@@ -3802,12 +3827,12 @@ function aiAnswer(pr){
     switch (pr.type) {
       case 'aid': return lv === 'beginner' ? rnd(pr.valid) : bestBy(pr.valid, i => aidValue(p, i) + (lv === 'mid' ? Math.random() : 0));
       case 'cards': return pr.any ? aiRerollPick(p) : worstCards(p, pr.range ? pr.min : pr.count);
-      case 'hex': { const v = [...pr.valid]; if (!v.length) return null; return lv === 'beginner' ? rnd(v) : bestBy(v, k => hexScore(p, k, pr.text) + Math.random() * 0.3); }
-      case 'edge': { const v = [...pr.valid]; if (!v.length) return null; if (lv === 'beginner') { const ok = v.filter(ek => edgeScore(p, ek) > 0); return rnd(ok.length ? ok : v); } return bestBy(v, ek => edgeScore(p, ek) + Math.random() * 0.3); }
+      case 'hex': { const v = [...pr.valid]; if (!v.length) return null; return lv === 'beginner' ? rnd(v) : bestBy(v, k => hexScore(p, k, pr.text) + plcBias(p, plcKind(p, k, pr.text), k) + Math.random() * 0.3); }
+      case 'edge': { const v = [...pr.valid]; if (!v.length) return null; if (lv === 'beginner') { const ok = v.filter(ek => edgeScore(p, ek) > 0); return rnd(ok.length ? ok : v); } return bestBy(v, ek => edgeScore(p, ek) + plcBias(p, 'e', ek) + Math.random() * 0.3); }
       case 'mixed': {
         const h = [...pr.valid], e = [...pr.validEdge];
-        if (h.length && (!e.length || Math.random() < 0.5)) return {hex: lv === 'beginner' ? rnd(h) : bestBy(h, k => hexScore(p, k, '지형'))};
-        if (e.length) { if (lv === 'beginner') { const ok = e.filter(ek => edgeScore(p, ek) > 0); return {edge: rnd(ok.length ? ok : e)}; } return {edge: bestBy(e, ek => edgeScore(p, ek))}; }
+        if (h.length && (!e.length || Math.random() < 0.5)) return {hex: lv === 'beginner' ? rnd(h) : bestBy(h, k => hexScore(p, k, '지형') + plcBias(p, plcKind(p, k, '지형'), k))};
+        if (e.length) { if (lv === 'beginner') { const ok = e.filter(ek => edgeScore(p, ek) > 0); return {edge: rnd(ok.length ? ok : e)}; } return {edge: bestBy(e, ek => edgeScore(p, ek) + plcBias(p, 'e', ek))}; }
         return null;
       }
       case 'choice': return chooseOpt(pr, p, lv);
@@ -3885,7 +3910,7 @@ function focusAdj(p, id, a){
   if (/^H/.test(id) && p.discs >= 1) b -= 3;                                                         // 행동 디스크 보관 반복은 점수로 이어지지 않음
   if (/^I/.test(id) && p.res.diamond >= 2 + diamondReserve(p)) b -= 4;                               // 다이아몬드는 필요한 만큼만
   b += planAdj(p, id, a) * PLAN_K;
-  b += learnBias(id);
+  b += learnBias(id) + decBias(p, id);
   // 다른 플레이어 기록에서 배운 것: 큰 행동(대건설·대개척·토끼 축제·대식량·식량)을 자원을 모아 한 번에 쓰고, 세금·다이아·디스크 보관 같은 작은 행동은 줄임
   if (/^[PMON]/.test(id) || id === 'B') b += BIG_K;
   if (/^[KH]/.test(id)) b -= SMALL_K;
@@ -3915,12 +3940,111 @@ function learnBias(id){   // 사람이 이번 라운드에 이 구역을 평균 
   const f = (AI_PROFILE.area[Math.min(G.round, 5) - 1] || {})[id.replace(/\d+$/, '')] || 0;
   return AIP.learnW * aiLearnW() * Math.min(f, 2);
 }
-function mergeProfile(base, sample){
-  const n = base.n, out = {v:1, n:n + 1, plan:{}, area:[]};
-  for (const k of Object.keys(sample.plan)) out.plan[k] = sample.plan[k].map((x, i) => Math.round(((base.plan[k] ? base.plan[k][i] : x) * n + x) / (n + 1) * 100) / 100);
+// ===== AI 학습 2: 상황별 선택 학습 (사람이 어떤 상황에서 어떤 행동 구역을 골랐는지) =====
+// 상황 = 라운드 · 손패 수 · 금 · 기본 자원 합. 구역마다 '이런 상황이면 이걸 고른다'는 가중치를 소프트맥스로 배웁니다.
+const decBase = id => id.replace(/\d+$/, '');
+function decCtx(p){ return {r:Math.min(G.round, 5) - 1, hand:p.hand.length, gold:p.res.gold || 0, mat:(p.res.wheat || 0) + (p.res.wood || 0) + (p.res.iron || 0)}; }
+function decFeats(id, c){ const b = decBase(id), f = [b, `r${c.r}:${b}`]; if (c.hand >= 3) f.push(`h:${b}`); if (c.gold >= 8) f.push(`g:${b}`); if (c.mat >= 12) f.push(`m:${b}`); return f; }
+function decRecord(pi, id){   // 사람이 행동 구역을 고르는 순간의 상황 · 선택지 · 선택을 저장
+  try {
+    const p = P(pi); if (!p || p.ai || !G || G.phase !== 'action') return;
+    const opts = new Set(); for (const k of Object.keys(G.areas)) { try { const st = areaState(k); if (st.open && !st.full && canPay(p, areaCost(p, k))) opts.add(decBase(k)); } catch (e) {} }
+    opts.add(decBase(id)); if (opts.size < 2) return;
+    (G.decs = G.decs || []).push({seat:pi, round:G.round, ...decCtx(p), opts:[...opts], chosen:decBase(id)});
+  } catch (e) {}
+}
+function decTrain(base, decs, wt = 1){
+  const dec = {n:(base && base.n) || 0, w:{...((base && base.w) || {})}};
+  for (let ep = 0; ep < 4; ep++) for (const d of decs) {
+    const fs = d.opts.map(o => decFeats(o, d)), sc = fs.map(f => f.reduce((a, k) => a + (dec.w[k] || 0), 0)), mx = Math.max(...sc), ex = sc.map(x => Math.exp(x - mx)), z = ex.reduce((a, b) => a + b, 0);
+    d.opts.forEach((o, i) => { const g = (o === d.chosen ? 1 : 0) - ex[i] / z; for (const k of fs[i]) dec.w[k] = Math.max(-3, Math.min(3, (dec.w[k] || 0) * 0.999 + 0.12 * wt * g)); });
+  }
+  dec.n = Math.round((dec.n + decs.length * wt) * 100) / 100;
+  for (const k of Object.keys(dec.w)) { if (Math.abs(dec.w[k]) < 0.01) delete dec.w[k]; else dec.w[k] = Math.round(dec.w[k] * 1000) / 1000; }
+  return dec;
+}
+function decBias(p, id){
+  const d = AI_PROFILE && AI_PROFILE.dec; if (!d || !d.n) return 0;
+  const s = decFeats(id, decCtx(p)).reduce((a, k) => a + (d.w[k] || 0), 0);
+  return AIP.decW * Math.min(1, d.n / 80) * aiLearnW() * Math.max(-2, Math.min(2, s));
+}
+// ===== AI 학습 3: 도로·타일·건물을 놓는 자리 학습 =====
+// 자리마다 특징(새로 뒤집히는 타일 수, 수도 테두리, 가장자리, 카드 추가 구역까지 거리, 도로 끝에서 이어지는지, 도시 합류 등)을 뽑고,
+// 사람이 고른 자리와 고르지 않은 자리를 소프트맥스로 비교해 특징별 가중치를 배웁니다.
+function plcDzDist(p, k){ let d = 99; for (const h of Object.keys(HEX)) if (HEX[h].ch === 'D' && !p.drawActive.includes(h)) d = Math.min(d, hexDist(k, h)); return d; }
+function plcKind(p, k, text){ return (text || '').includes('지형') && !p.tiles[k] ? 't' : 'b'; }
+function plcFeats(p, kind, k){
+  const f = [];
+  if (kind === 'e') {
+    const e = EDGE[k], roads = new Set(p.roads), vt = validTerrain(p); let fl = 0, nw = 0, dz = 99;
+    for (const hk of e.hexes) {
+      dz = Math.min(dz, plcDzDist(p, hk));
+      if (roadedHex(p, hk, roads) || !TERRAIN[tch(p, hk)]) continue;
+      const t = p.tiles[hk]; if (t && !t.flipped) fl++; else if (!t && vt.has(hk)) nw++;
+    }
+    if (fl) f.push('e:fl' + fl); if (nw) f.push('e:nw' + nw); if (!fl && !nw) f.push('e:dead');
+    if (e.hexes.length < 2) f.push('e:rim');
+    if (e.hexes.some(h => isCap(h))) f.push('e:cap');
+    if (dz <= 0) f.push('e:dz0'); else if (dz <= 1) f.push('e:dz1'); else if (dz <= 3) f.push('e:dz3');
+    const deg = {}; for (const r of p.roads) { deg[EDGE[r].a] = (deg[EDGE[r].a] || 0) + 1; deg[EDGE[r].b] = (deg[EDGE[r].b] || 0) + 1; }
+    if (deg[e.a] === 1 || deg[e.b] === 1) f.push('e:tip');
+  } else if (kind === 't') {
+    const h = HEX[k], nb = h.nb.filter(n => p.tiles[n] || isCap(n)).length;
+    if (h.edges.some(e => p.roads.includes(e))) f.push('t:road');
+    f.push('t:nb' + Math.min(nb, 4));
+    if (iconsOf(p, k)) f.push('t:icon');
+    if (PORTS.some(pt => pt.hexes.includes(k))) f.push('t:port');
+    if (h.ch === 'X') f.push('t:x');
+    const dz = plcDzDist(p, k); if (dz <= 1) f.push('t:dz1'); else if (dz <= 3) f.push('t:dz3');
+  } else {
+    const h = HEX[k], pr = h.nb.filter(n => spot(p, n) && spot(p, n).prop);
+    if (isCap(k)) f.push('b:cap');
+    if (!pr.length) f.push('b:none');
+    else { const cs = cities(p); f.push(cs.some(c => pr.some(n => c.hexes.includes(n))) ? 'b:city' : 'b:grow'); }
+  }
+  return f;
+}
+const PLC_FK = ['e:fl1','e:fl2','e:nw1','e:nw2','e:dead','e:rim','e:cap','e:dz0','e:dz1','e:dz3','e:tip','t:road','t:nb0','t:nb1','t:nb2','t:nb3','t:nb4','t:icon','t:port','t:x','t:dz1','t:dz3','b:cap','b:none','b:city','b:grow'];
+const plcEnc = f => f.map(x => PLC_FK.indexOf(x)).filter(i => i >= 0);
+let PLC_LOG = {gk:'', rows:[]};   // 게임 상태(G) 밖, 이 기기에만 모음 → 온라인 전송량에 영향 없음
+const plcGK = () => (G.code || 'local') + '|' + G.players.map(p => p.name).join(',');
+function plcRecord(pr, v){
+  try {
+    const pi = G.cur, p = P(pi); if (!p || p.ai || !G || G.phase !== 'action' || v == null) return;
+    let kind, opts, ch;
+    if (pr.type === 'edge') { kind = 'e'; opts = [...pr.valid]; ch = v; }
+    else if (pr.type === 'hex') { opts = [...pr.valid]; kind = plcKind(p, v, pr.text); ch = v; }
+    else if (pr.type === 'mixed') { if (v.edge) { kind = 'e'; opts = [...pr.validEdge]; ch = v.edge; } else if (v.hex) { opts = [...pr.valid]; kind = plcKind(p, v.hex, '지형'); ch = v.hex; } else return; }
+    else return;
+    if (opts.length < 2 || !opts.includes(ch)) return;
+    opts = opts.filter(k => k === ch || (kind === 'e' || plcKind(p, k, kind === 't' ? '지형' : '') === kind));
+    if (opts.length > 8) { const rest = opts.filter(k => k !== ch).sort(() => Math.random() - .5).slice(0, 7); opts = [ch, ...rest]; }
+    const fs = opts.map(k => plcEnc(plcFeats(p, kind, k))), ci = opts.indexOf(ch), gk = plcGK();
+    if (PLC_LOG.gk !== gk) PLC_LOG = {gk, rows:[]};
+    PLC_LOG.rows.push({seat:pi, ci, fs});
+  } catch (e) {}
+}
+function plcTrain(base, recs, wt = 1){
+  const m = {n:(base && base.n) || 0, w:{...((base && base.w) || {})}};
+  for (let ep = 0; ep < 4; ep++) for (const d of recs) {
+    const fk = d.fs.map(f => f.map(i => PLC_FK[i])), sc = fk.map(f => f.reduce((a, k) => a + (m.w[k] || 0), 0)), mx = Math.max(...sc), ex = sc.map(x => Math.exp(x - mx)), z = ex.reduce((a, b) => a + b, 0);
+    fk.forEach((f, i) => { const g = (i === d.ci ? 1 : 0) - ex[i] / z; for (const k of f) m.w[k] = Math.max(-3, Math.min(3, (m.w[k] || 0) * 0.999 + 0.1 * wt * g)); });
+  }
+  m.n = Math.round((m.n + recs.length * wt) * 100) / 100;
+  for (const k of Object.keys(m.w)) { if (Math.abs(m.w[k]) < 0.01) delete m.w[k]; else m.w[k] = Math.round(m.w[k] * 1000) / 1000; }
+  return m;
+}
+function plcBias(p, kind, k){
+  const m = AI_PROFILE && AI_PROFILE.plc; if (!m || !m.n) return 0;
+  const s = plcFeats(p, kind, k).reduce((a, x) => a + (m.w[x] || 0), 0);
+  return AIP.plcW * Math.min(1, m.n / 60) * aiLearnW() * Math.max(-2, Math.min(2, s));
+}
+function mergeProfile(base, sample, w = 1){   // w: 이 판의 반영 비중 (점수가 높을수록 큼)
+  const n = base.n, out = {v:1, n:Math.round((n + w) * 100) / 100, plan:{}, area:[], dec:base.dec, plc:base.plc}, nw = n + w;
+  for (const k of Object.keys(sample.plan)) out.plan[k] = sample.plan[k].map((x, i) => Math.round(((base.plan[k] ? base.plan[k][i] : x) * n + x * w) / nw * 100) / 100);
   for (let r = 0; r < 5; r++) {
     const a = base.area[r] || {}, b = sample.area[r] || {}, o = {};
-    for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) { const v = ((a[id] || 0) * n + (b[id] || 0)) / (n + 1); if (v >= 0.01) o[id] = Math.round(v * 100) / 100; }
+    for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) { const v = ((a[id] || 0) * n + (b[id] || 0) * w) / nw; if (v >= 0.01) o[id] = Math.round(v * 100) / 100; }
     out.area.push(o);
   }
   return out;
@@ -3942,23 +4066,47 @@ function learnSample(seat){   // 턴별 기록(G.tlog)에서 한 사람의 라�
   }
   return {plan, area};
 }
+const PSTAT_KEY = 'sweetland-player-stats-v1';
+function pstats(){ try { return JSON.parse(localStorage.getItem(PSTAT_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function pstatsUpdate(name, score){   // 이름별 평균 점수 (최근 판에 조금 더 비중)
+  try { const st = pstats(), o = st[name] || {n:0, avg:score}; const n = Math.min(o.n, 9); st[name] = {n:o.n + 1, avg:Math.round((o.avg * n + score) / (n + 1))}; localStorage.setItem(PSTAT_KEY, JSON.stringify(st)); } catch (e) {}
+}
+const learnWeight = sc => Math.max(0.2, Math.min(1.3, sc / 300));   // 점수 300점 = 비중 1, 낮은 점수는 조금만 · 높은 점수는 더 크게
+function autoLevel(humanNames){   // 사람 플레이어들의 평균 점수에 맞춘 AI 수준
+  const st = pstats(), avgs = humanNames.map(n => st[n] && st[n].avg).filter(x => x != null);
+  if (!avgs.length) return 'mid';
+  const m = avgs.reduce((a, b) => a + b, 0) / avgs.length;
+  return m < 130 ? 'beginner' : m < 230 ? 'mid' : 'adv';
+}
 async function aiLearnOnEnd(){
   if (!G || G.phase !== 'end' || G.learned) return;
   G.learned = true;
   const humans = G.players.map((p, i) => ({p, i, s:score(p, i).total})).filter(x => !x.p.ai);
   if (!humans.length || !AI_PROFILE) return;
-  const best = humans.sort((a, b) => b.s - a.s)[0];
-  const sample = learnSample(best.i); if (!sample) return;
-  AI_PROFILE = mergeProfile(AI_PROFILE, sample); aiProfileSaveLocal(); aiProfileApply();
-  log(`AI 학습: ${best.p.name}의 기록을 AI 프로필에 반영 (누적 ${AI_PROFILE.n}판)`);
-  if (G.mode === 'online' && !(NET.isHost && NET.isHost())) return;   // 온라인은 방장 한 명만 공용 프로필에 씀
+  humans.forEach(h => pstatsUpdate(h.p.name, h.s));
+  const batch = humans.map(h => ({h, w:learnWeight(h.s), sample:learnSample(h.i), decs:(G.decs || []).filter(d => d.seat === h.i), plcs:(PLC_LOG.gk === plcGK() ? PLC_LOG.rows : []).filter(d => d.seat === h.i)})).filter(b => b.sample || b.decs.length || b.plcs.length);
+  if (!batch.length) return;
+  const apply = base => { let pr = base; for (const b of batch) { if (b.sample) pr = mergeProfile(pr, b.sample, b.w); if (b.decs.length) pr.dec = decTrain(pr.dec, b.decs, b.w); if (b.plcs.length) pr.plc = plcTrain(pr.plc, b.plcs, b.w); } return pr; };
+  AI_PROFILE = apply(AI_PROFILE); aiProfileSaveLocal(); aiProfileApply();
+  log(`AI 학습: 사람 ${batch.length}명의 기록을 점수에 따라 비중을 달리해 반영 (누적 ${Math.round(AI_PROFILE.n * 10) / 10}판 · 상황별 선택 ${Math.round((AI_PROFILE.dec && AI_PROFILE.dec.n) || 0)}건 · 놓는 자리 ${Math.round((AI_PROFILE.plc && AI_PROFILE.plc.n) || 0)}건)`);
+  PLC_LOG = {gk:'', rows:[]};
+  const host = !(G.mode === 'online' && !(NET.isHost && NET.isHost()));
+  // 방장은 전체(요약·상황별·자리)를, 방장이 아니면 자기 기기에서 모은 자리 학습분만 공용 프로필에 합침 (중복 반영 방지)
+  const up = host ? batch : batch.map(b => ({...b, sample:null, decs:[]}));
+  if (!up.some(b => b.sample || b.decs.length || b.plcs.length)) return;
+  const apply2 = base => { let pr = base; for (const b of up) { if (b.sample) pr = mergeProfile(pr, b.sample, b.w); if (b.decs.length) pr.dec = decTrain(pr.dec, b.decs, b.w); if (b.plcs.length) pr.plc = plcTrain(pr.plc, b.plcs, b.w); } return pr; };
   try {
     if (!NET.db) return;
-    const ref = NET.db.doc('ailearn/profile'), snap = await ref.get();
-    let cloud = null; try { cloud = snap && snap.exists ? JSON.parse((snap.data() || {}).json || 'null') : null; } catch(e){}
-    const merged = aiProfileValid(cloud) ? mergeProfile(cloud, sample) : AI_PROFILE;
-    await ref.set({json:JSON.stringify(merged), n:merged.n, at:Date.now()});
-    if (merged.n > AI_PROFILE.n) { AI_PROFILE = merged; aiProfileSaveLocal(); aiProfileApply(); }
+    const ref = NET.db.doc('ailearn/profile');
+    const mergeCloud = snap => {
+      let cloud = null; try { cloud = snap && snap.exists ? JSON.parse((snap.data() || {}).json || 'null') : null; } catch(e){}
+      return aiProfileValid(cloud) ? apply2(cloud) : (host ? AI_PROFILE : apply2(clone(AI_PROFILE_SEED)));
+    };
+    let merged;
+    if (NET.db.runTransaction) {   // 트랜잭션: 여러 명이 동시에 올려도 서로 덮어쓰지 않고 차례로 합침
+      merged = await NET.db.runTransaction(async tx => { const m = mergeCloud(await tx.get(ref)); tx.set(ref, {json:JSON.stringify(m), n:m.n, at:Date.now()}); return m; });
+    } else { merged = mergeCloud(await ref.get()); await ref.set({json:JSON.stringify(merged), n:merged.n, at:Date.now()}); }
+    if (merged !== AI_PROFILE && (merged.n > AI_PROFILE.n || (merged.dec && merged.dec.n > ((AI_PROFILE.dec && AI_PROFILE.dec.n) || 0)) || (merged.plc && merged.plc.n > ((AI_PROFILE.plc && AI_PROFILE.plc.n) || 0)))) { AI_PROFILE = merged; aiProfileSaveLocal(); aiProfileApply(); }
   } catch(e){ console.error('AI 학습 저장 실패', e); }
 }
 async function aiProfileSync(){   // 시작할 때 온라인 공용 프로필이 더 많이 배웠으면 그걸 씀
@@ -4016,7 +4164,7 @@ function hexScore(p, k, text){
     let s = 0;
     if (iconsOf(p, k)) s += effsVal(p, iconsOf(p, k));
     s += h.nb.filter(n => p.tiles[n] || isCap(n)).length * 0.8;
-    if (h.edges.some(e => p.roads.includes(e))) s += 2.2;
+    if (h.edges.some(e => p.roads.includes(e))) s += 4.5;   // 도로 옆에 놓으면 바로 뒤집힘
     if (PORTS.some(pt => pt.hexes.includes(k))) s += 1.5;
     if (AIP.portLv[P(G.cur).ai]) {
       const before = connectedPorts(p); p.tiles[k] = {type:'x'}; const after = connectedPorts(p); const conn = connectedSet(p).has(k); delete p.tiles[k];
@@ -4041,8 +4189,22 @@ function hexScore(p, k, text){
     return s;
   }
   // 건축물·토끼·시계탑: 서로 다른 종류의 건축물 옆을 선호 (도시 만들기)
-  const types = new Set(h.nb.map(n => spot(p, n)).filter(s => s && s.prop).map(s => s.prop));
-  let s = types.size * 1.5;
+  let s = 0;
+  { // 도시(서로 다른 건축물 3종 이상 연결)를 여러 개 만들기: 이미 도시인 덩어리에 붙이면 감점, 새 덩어리는 가점
+    const set = new Set([...CAPITALS, ...Object.keys(p.tiles)].filter(x => spot(p, x).prop)), seen = new Set(), comps = [];
+    for (const n of h.nb) {
+      if (!set.has(n) || seen.has(n)) continue;
+      const comp = [], st = [n]; seen.add(n);
+      while (st.length) { const c = st.pop(); comp.push(c); for (const m of HEX[c].nb) if (set.has(m) && !seen.has(m) && m !== k) { seen.add(m); st.push(m); } }
+      comps.push(new Set(comp.map(c => spot(p, c).prop)));
+    }
+    if (!comps.length) s += 1.2;
+    else {
+      const cityN = comps.filter(c => c.size >= 3).length, merged = new Set(comps.flatMap(c => [...c]));
+      if (cityN) s -= 5 * cityN;
+      else s += merged.size >= 2 ? 3 + merged.size : 1;
+    }
+  }
   if (isCap(k)) s += 0.5;
   if (text.includes('토끼')) s += (spot(p, k).prop ? 1 : 0);
   return s;
@@ -4068,8 +4230,8 @@ function edgeDirect(p, ek, roads, vt){
     if (roadedHex(p, hk, roads)) continue;
     const h = HEX[hk], t = p.tiles[hk];
     if (TERRAIN[tch(p, hk)]) {
-      if (t && !t.flipped) s += 3;                      // 놓인 타일 즉시 뒤집기
-      else if (!t) s += vt.has(hk) ? 1 : 0.4;          // 나중에 놓을 타일을 미리 뒤집을 자리
+      if (t && !t.flipped) s += 5;                      // 놓인 타일은 빨리 뒤집기
+      else if (!t) s += vt.has(hk) ? 1.2 : 0.3;          // 새로 개척할 타일 자리(뒤집힌 타일 옆은 가점 없음)
     } else if (h.ch === 'D' && !p.drawActive.includes(hk)) {
       s += h.nb.some(n => p.tiles[n]) ? 3.5 + (stratOn() ? AIP.dz.road : 0) : 1.5;   // 카드 추가 구역 활성화
     }
@@ -4093,7 +4255,9 @@ function roadNetDist(p, roads){   // 내 도로망(수도 꼭짓점 + 놓은 도
 }
 function edgeScore0(p, ek){
   const roads = new Set(p.roads), vt = validTerrain(p);
-  const direct = edgeDirect(p, ek, roads, vt);
+  { const e0 = EDGE[ek], cy = (e0.p1[1] + e0.p2[1]) / 2, ch = e0.hexes.find(h => isCap(h)); if (ch && cy > HEX[ch].y + 10) return -60; }   // 수도 맨 아래쪽(맵 아래 가장자리)으로는 도로를 뻗지 않음
+  let direct = edgeDirect(p, ek, roads, vt);
+  if (direct > 0 && EDGE[ek].hexes.some(h => isCap(h))) direct = Math.max(0.1, direct * 0.45 - 1);   // 수도 6각형 테두리 도로는 피하고 바깥으로 뻗기
   const rim = EDGE[ek].hexes.length < 2;   // 맵 가장자리(한쪽에만 칸이 있는 변)는 효율이 떨어져 감점
   if (direct > 0) return rim ? direct * 0.85 : direct;
   // 길목 점수: 이 변을 놓으면 쓸모 있는 변(목표)까지 남은 도로 수가 줄어드는가
@@ -4109,7 +4273,7 @@ function edgeScore0(p, ek){
   }
   if (best > 0) return rim ? best * 0.85 : best;
   // 아무 쓸모 없는 변 (번영 트랙 개수만 채움): 그래도 가장자리보다 안쪽, 뒤집을 지형이 많은 변을 고름
-  let pot = 0; for (const hk of EDGE[ek].hexes) if (!roadedHex(p, hk, roads) && TERRAIN[tch(p, hk)]) pot += p.tiles[hk] ? 0.5 : 0.25;
+  let pot = 0; for (const hk of EDGE[ek].hexes) if (!roadedHex(p, hk, roads) && TERRAIN[tch(p, hk)]) pot += p.tiles[hk] ? (p.tiles[hk].flipped ? 0 : 0.5) : (vt.has(hk) ? 0.25 : 0.1);   // 이미 뒤집힌 타일 옆은 가점 없음(새로 개척할 때만)
   return -5 + pot + (rim ? -1 : 0.5);
 }
 // 맵 중앙에서 먼 변(맵 바깥쪽 가장자리)일수록 약간 감점: 점수가 비슷하면 안쪽 변을 고르게 함
@@ -4191,7 +4355,7 @@ async function aiTurn(pi){
   p = P(pi);
   const cands = [];
   // 빈 행동칸(첣 칸, 손패 1장)을 우선: 이미 누가 들어간 구역은 들어가는 칸 하나당 점수를 3씩 깎음 (다이아 2개 번영 구역 G는 제외)
-  for (const id of Object.keys(G.areas)) { let v = areaValue(p, id, lv); if (v != null) { const v0 = v; if (id !== 'G') v -= 3 * Math.max(0, areaState(id).idx); cands.push({kind:'area', id, v, v0}); } }
+  for (const id of Object.keys(G.areas)) { let v = areaValue(p, id, lv); if (v != null) { const v0 = v; if (id !== 'G') v -= AIP.cardK * Math.max(0, areaState(id).idx); cands.push({kind:'area', id, v, v0}); } }
   for (const id of p.skills) { const s = skillDef(id); if (s.kind === 'flip' && !p.skillFlipped.includes(id) && (!s.cost || canPay(p, s.cost))) cands.push({kind:'flip', id, v:effsVal(p, s.eff) * (lv === 'mid' ? 0.75 + Math.random()*0.5 : 1)}); }
   p.hand.forEach((cid, hi) => { const c = cardOf(cid); const cnet = (!c.blank && lv !== 'beginner' && c.kind === 'immediate') ? cardNet(p, c) : null; if (!c.blank && canPay(p, cardCost(p, c)) && handOk(p, 1) && (cnet === null || cnet >= AIP.cardMin || (stratOn() && (clockNeeds(p) || {}).cards))) cands.push({kind:'card', hi, v:(cnet !== null ? cnet * AI_K : (c.kind === 'pass' && lv !== 'beginner' ? passCardVal(p, c) : effsVal(p, c.now)) - resVal(p, cardCost(p, c))) + (c.kind === 'pass' ? 2 : 0) + AIP.cardBonus + (c.industry && p.res.diamond >= 1 ? AIP.autoVal : 0) + (stratOn() && (clockNeeds(p) || {}).cards ? AIP.clockCard : 0) - (stratOn() && (cardCost(p, c).diamond || 0) && p.res.diamond - cardCost(p, c).diamond < diamondReserve(p) ? 8 : 0)}); });
   let pick = null;
@@ -4204,7 +4368,9 @@ async function aiTurn(pi){
     const th = AIP.th[lv] === undefined ? 0.3 : AIP.th[lv];
     const good = cands.filter(c => (c.v0 !== undefined ? c.v0 : c.v) > th);
     // 중급은 상위 3개 중 하나를 고르고, 고급은 항상 최선을 고른다
-    pick = !good.length ? null : lv === 'adv' ? good[0] : rnd(good.slice(0, 3));
+    // 비어 있는 행동칸(첫 칸)을 우선: 이미 누가 들어간 구역은 비어 있는 선택지가 하나도 없을 때만 고른다 (지금 할 수 있는 칸만 후보라서 못 하는 칸은 고르지 않음)
+    const fresh = good.filter(c => c.kind !== 'area' || c.id === 'G' || areaState(c.id).idx === 0), pool = fresh.some(c => c.kind === 'area') || fresh.length ? fresh : good;
+    pick = !pool.length ? null : lv === 'adv' ? pool[0] : rnd(pool.slice(0, 3));
   }
   if (pick && pick.kind === 'area') { if (stratOn() && G.round === 1) { const nx = openNext(p); if (nx && nx === pick.id) (p.openDone = p.openDone || []).push(nx); } await useArea(pi, pick.id); }
   else if (pick && pick.kind === 'flip') await flipSkill(pi, pick.id);
@@ -4245,7 +4411,7 @@ function planAfter(p, x, rem){   // 이 토큰을 짓고도 남은 rem개를 더
 async function aiPrepareBuild(pi){
   const p = P(pi), spots = propSpots(p, s => !s.prop).size;
   for (const [aid, n] of [['P', 3], ['E', 2]]) {
-    const st = G.areas[aid] && areaState(aid); if (!st || !st.open || st.full || spots < n) continue;
+    const st = G.areas[aid] && areaState(aid); if (!st || !st.open || st.full || st.idx > 0 || spots < n) continue;   // 이미 누가 들어간 칸은 준비하지 않음
     if (buildTokens(p, n, true, areaCost(p, aid)).n >= n) return;                         // 이미 다 지을 수 있음
     const total = buildTokens(p, n, false, areaCost(p, aid)).total, miss = {};
     let need = 0; for (const k of ['wheat', 'wood', 'iron']) { const d = (total[k] || 0) - p.res[k]; if (d > 0) { miss[k] = d; need += d; } }
@@ -4927,7 +5093,7 @@ const PHASE = {'hand-draft':'카드 드래프트', 'setup-aid':'게임 준비', 
 let SETUP = {mode:'local', n:2, adv:false, turnVariant:true, handMode:'reroll', randStart:true, aiBonus:true, pick:'free', mapMode:'free', joinName:'', joinChar:'bastet', joinMap:'A', players:[
   {name:'플레이어 1', char:'elsa', type:'human'},{name:'플레이어 2', char:'bastet', type:'mid'},
   {name:'플레이어 3', char:'solbee', type:'mid'},{name:'플레이어 4', char:'rikka', type:'mid'}]};
-const SEAT_TYPES = [['human','사람'],['beginner','AI 초보'],['mid','AI 중급'],['adv','AI 고급']];
+const SEAT_TYPES = [['human','사람'],['beginner','AI 초급'],['mid','AI 중급'],['adv','AI 고급']];
 const mapOpts = sel => MAP_IDS.map(m => `<option value="${m}" ${sel===m?'selected':''}>영지 ${MAPS[m].name}${m==='A'?' (추천)':''}</option>`).join('');
 const charOpts = (sel, taken = []) => CHARACTERS.map(c => { const t = c.id !== sel && taken.includes(c.id); return `<option value="${c.id}" ${sel===c.id?'selected':''} ${t?'disabled':''}>${c.name}${t?' (선택됨)':''}</option>`; }).join('');
 // 캐릭터 중복 선택 방지: 다른 자리가 이미 고른 캐릭터는 고를 수 없음
@@ -4967,7 +5133,7 @@ function renderSetup(){
       <h3>영지 보드 정하기</h3>
       <div class="seg">${[['free','각자 고르기'],['randB','랜덤 (B면 중 하나씩)']].map(([v,l]) => `<button class="segb ${SETUP.mapMode===v?'on':''}" data-a="setMapMode" data-v="${v}">${l}</button>`).join('')}</div>
       <small>${SETUP.mapMode === 'randB' ? '시작할 때 영지 B1~B5 중에서 플레이어마다 서로 다른 보드를 무작위로 받습니다. (최대 5명까지 겹치지 않음)' + (online ? ' 입장하는 사람은 영지를 고를 수 없습니다.' : '') : (online ? '입장하는 사람이 영지 보드를 직접 고릅니다.' : '자리마다 원하는 영지 보드를 직접 고릅니다.')}</small>
-      <small>3인 이상이면 모방 보드가 추가됩니다. 2~4번 자리는 사람 또는 AI(초보·중급·고급)로 정할 수 있습니다.${online ? ' 온라인에서 "사람" 자리는 링크를 받은 사람이 들어와 앉는 자리입니다.' : ''}</small>
+      <small>3인 이상이면 모방 보드가 추가됩니다. 2~4번 자리는 사람 또는 AI(초급·중급·고급)로 정할 수 있습니다.${online ? ' 온라인에서 "사람" 자리는 링크를 받은 사람이 들어와 앉는 자리입니다.' : ''}</small>
       <h3>플레이어 (시작 플레이어부터)</h3>
       <div class="setup-players">
       ${SETUP.players.slice(0, SETUP.n).map((p,i) => { const ch = CHARACTERS.find(c=>c.id===p.char); const remoteHuman = online && i > 0 && p.type === 'human'; return `
@@ -4987,7 +5153,7 @@ function renderSetup(){
       <label class="advopt"><input type="checkbox" id="randstart" ${SETUP.randStart?'checked':''}> 시작 순서 무작위: 내 자리(시작 플레이어)를 게임마다 랜덤으로 정합니다</label>
       <div class="rulebox">
       <label class="advopt"><input type="checkbox" id="aibonus" ${SETUP.aiBonus?'checked':''}> AI 난이도 보너스: AI가 패스할 때마다 승점을 더해, 평균 점수가 초급 약 140 · 중급 약 220 · 고급 약 300점이 되게 맞춥니다 (끄면 AI의 실제 실력 그대로)</label>
-      <small class="muted">AI 학습: 사람 플레이 기록 ${AI_PROFILE ? AI_PROFILE.n : 0}판을 배웠습니다 (게임이 끝날 때마다 사람 1위의 기록을 반영 · 중급·고급 AI에 적용)</small>
+      <small class="muted">AI 학습: 사람 플레이 기록 ${AI_PROFILE ? Math.round(AI_PROFILE.n * 10) / 10 : 0}판 · 상황별 선택 ${AI_PROFILE && AI_PROFILE.dec ? AI_PROFILE.dec.n : 0}건을 배웠습니다 (게임이 끝날 때마다 사람 1위의 기록을 반영 · 중급·고급 AI에 적용)</small>
       </div>
       <label class="advopt"><input type="checkbox" id="advsk" ${SETUP.adv?'checked':''}> 변형 규칙: 고급 기술 타일 사용 (인원+1장 공개, 기술 타일을 얻을 때 다이아 1개로 대신 가져가기)</label>
       ${online ? (NET.db ? `${NET.canWrite === false ? '<p class="warnbox">보기 전용 권한이라 방을 만들 수 없습니다. 방을 만든 사람이 이 계정을 "편집 가능" 권한으로 초대해야 합니다.</p>' : ''}<button class="btn primary wide" data-a="ocreate" ${NET.canWrite === false ? 'disabled' : ''}>온라인 게임 만들기</button>` : '') : `<button class="btn primary wide" data-a="start">게임 시작</button>`}
@@ -5038,7 +5204,7 @@ const NOTES = `<ul>
 <li>공식 룰북의 영지 보드 A면, 번영·산업·음식 트랙, 건축물 비용과 보너스, 행동 구역 A~Q와 모방 보드, 패스 순서(도시 점수 → 산업 점수 → 지원 타일 → 기술 타일 → 카드), 최종 점수(항구·금·다이아·마일스톤·최종 점수 타일)를 반영했습니다.</li>
 <li>룰북 그림으로 확인되지 않아 [추정]한 값: 하우스 3번째 줄 보너스, 최종 점수 타일의 중립 기준치, 엘사 외 캐릭터의 시작 자원과 시계탑 조건(엘사 값을 공통 적용).</li>
 <li>시민 카드는 207종(올려주신 카드 사진 전부, 카드마다 1장씩)이 모두 등록되어 있고 각 1장씩 덱에 섞입니다. 나머지는 손패 비용과 자유 행동용 빈 카드입니다.</li>
-<li>솔로 플레이는 룰북의 가상 플레이어(미오) 대신 AI 상대(초보·중급·고급)로 합니다. 아직 없음: 변형 규칙, 카드에 의존하는 일부 캐릭터 능력(사쿠라 시계탑 등).</li><li>온라인 대전: 게임을 만든 사람이 이 링크를 '편집 가능' 권한으로 공유해야 상대가 참가할 수 있습니다. 보기 전용 권한이면 관전만 됩니다. 대기실의 "초대 링크"(주소 끝에 #방코드)를 받은 사람은 열자마자 닉네임을 정하고 입장합니다. 방장이 정한 캐릭터·영지 방식(각자 선택/랜덤)이 그대로 적용됩니다.</li>
+<li>솔로 플레이는 룰북의 가상 플레이어(미오) 대신 AI 상대(초급·중급·고급)로 합니다. 아직 없음: 변형 규칙, 카드에 의존하는 일부 캐릭터 능력(사쿠라 시계탑 등).</li><li>온라인 대전: 게임을 만든 사람이 이 링크를 '편집 가능' 권한으로 공유해야 상대가 참가할 수 있습니다. 보기 전용 권한이면 관전만 됩니다. 대기실의 "초대 링크"(주소 끝에 #방코드)를 받은 사람은 열자마자 닉네임을 정하고 입장합니다. 방장이 정한 캐릭터·영지 방식(각자 선택/랜덤)이 그대로 적용됩니다.</li>
 </ul>`;
 
 // ---------- 메인 렌더 ----------
@@ -5177,6 +5343,7 @@ document.addEventListener('pointerup', () => {
     document.querySelectorAll('.ov [data-rz]').forEach(el => {
       if (el.classList.contains('ovcollapsed')) return;
       const w = el.style.width ? parseInt(el.style.width) : 0, h = el.style.height ? parseInt(el.style.height) : 0, i = el.dataset.rz, o = sz[i] || {};
+      if (i === '5') { el.style.removeProperty('height'); const mt = el.closest('.ovmt'); if (w && mt) { mt.style.setProperty('--mw', w + 'px'); mt.closest('.ov').style.setProperty('--rw', (w + 200) + 'px'); } if ((w || 0) !== (o.w || 0)) { sz[i] = {w, h: 0}; ch = true; } return; }
       if ((w || 0) !== (o.w || 0) || (h || 0) !== (o.h || 0)) { sz[i] = {w, h}; ch = true; }
     });
     if (ch) { try { localStorage.setItem(OV_SZ_KEY, JSON.stringify(sz)); } catch (e) {} ovFitHand(); }
@@ -5187,13 +5354,15 @@ function ovFoldInit(){
     if (!document.body.classList.contains('ovon')) return;
     ovFitHand(); setTimeout(ovFitHand, 250); setTimeout(ovFitHand, 900);
     UI.ovFold = UI.ovFold || {};
-    document.querySelectorAll('.ov > .panel, .ov > .ovmt > div > .panel').forEach((el, i) => {
-      if (el.classList.contains('ovstats')) return; el.classList.add('ovf'); el.dataset.ttl = OV_TTL[i] || '';
+    const qq = x => document.querySelector(x);
+    [qq('.ov .ovhead'), qq('.ov .ovres'), qq('.ov .ovnav'), qq('.ov .ovhand'), qq('.ov .panel:has(> .ovareas)'), qq('#map-panel'), ...document.querySelectorAll('.ov .ovmt-r > .panel'), qq('.ov .ovaid')].forEach((el, i) => {
+      if (!el) return; el.classList.add('ovf'); el.dataset.ttl = OV_TTL[i] || '';
       const off = !!(UI.ovFold[i] != null ? UI.ovFold[i] : i === 2) && !(i === 8 && UI.prompt && UI.prompt.type === 'aid'); el.classList.toggle('ovcollapsed', off);
       const b = document.createElement('button'); b.type = 'button'; b.className = 'ovfoldb'; b.dataset.a = 'ovfold'; b.dataset.v = i;
       b.title = off ? '펼치기' : '접기'; b.textContent = off ? '▾' : '▴'; el.appendChild(b);
       const sz = ovSizes()[i]; el.dataset.rz = i;
-      if (sz && !off && window.matchMedia('(min-width: 701px)').matches) { if (sz.w) el.style.width = sz.w + 'px'; if (sz.h) el.style.height = sz.h + 'px'; }
+      if (i === 5) { const mt = el.closest('.ovmt'); if (mt) { if (sz && sz.w && window.matchMedia('(min-width: 701px)').matches) { mt.style.setProperty('--mw', sz.w + 'px'); mt.closest('.ov').style.setProperty('--rw', (sz.w + 200) + 'px'); } else { mt.style.removeProperty('--mw'); mt.closest('.ov').style.removeProperty('--rw'); } } if (sz && sz.w) el.style.width = sz.w + 'px'; }
+      else if (sz && !off && window.matchMedia('(min-width: 701px)').matches) { if (sz.w) el.style.width = sz.w + 'px'; if (sz.h) el.style.height = sz.h + 'px'; }
     });
     ovFitHand();
   } catch (e) {}
@@ -5209,18 +5378,18 @@ function overviewBody(p, pi){
   const ids = Object.keys(G.areas).sort((x, y) => { const o = {special:0, basic:1, adv:2}; return (o[AREAS[x].cat] ?? 3) - (o[AREAS[y].cat] ?? 3) || (x < y ? -1 : 1); });
   const clockMet = p.clock ? null : clockReqs(p).filter(reqMet).length, clockAll = clockReqs(p).length;
   const bar = (v, max) => `<span class="ovbar"><i style="width:${Math.min(100, Math.round(v / max * 100))}%"></i></span>`;
-  const prosp = PROSP.map((t, i) => `<div class="ovtr tone-${t.color}" data-a="ovsheet" data-v="prosp" title="${esc(t.label)} (누르면 보상 보기)">${ic(PROSP_TARGET[t.key])}${bar(p.prosp[i], t.len)}<b>${p.prosp[i]}/${t.len} <span class="ovpt" title="현재 칸 점수: 점수/개수">${(r => r ? r.pts + '/' + r.per : '')(prospRate(t, Math.max(1, p.prosp[i])))}점 → <em>${sc.prospDetail[i]}점</em></span></b></div>`).join('');
+  const prosp = PROSP.map((t, i) => `<div class="ovtr tone-${t.color}" data-a="ovsheet" data-v="prosp" title="${esc(t.label)} (누르면 보상 보기)">${ic(PROSP_TARGET[t.key])}${bar(p.prosp[i], t.len)}<b>${p.prosp[i]}/${t.len} <span class="ovpt" title="현재 칸 점수: 점수/개수">${p.prosp[i] <= 0 ? '0점' : (r => r ? r.pts + '/' + r.per : '')(prospRate(t, p.prosp[i])) + '점 → '}${p.prosp[i] <= 0 ? '' : `<em>${sc.prospDetail[i]}점</em>`}</span></b></div>`).join('');
   const mstones = G.milestones.map(m => { const d = MILESTONES.find(x => x.id === m.id); const v = Math.min(d.val(p), d.goal);
     return `<span class="ovms ${m.taken != null ? 'taken' : ''} ${v >= d.goal ? 'ok' : ''}" data-a="ovsheet" data-v="miles" title="${esc(d.text)}">${esc(d.name)} <b>${m.taken != null && m.taken >= 0 ? (P(m.taken).name) : v + '/' + d.goal}</b></span>`; }).join('');
   const skillReady = p.skills.some(id => { const s = skillDef(id); return myTurn && s.kind === 'flip' && !p.skillFlipped.includes(id) && !G.turn.mainDone && !UI.prompt; });
   const skills = p.skills.map(id => { const s = skillDef(id), used = p.skillFlipped.includes(id), can = myTurn && s.kind === 'flip' && !used && !G.turn.mainDone && !UI.prompt;
     return `<button type="button" class="ovsk ${used ? 'used' : ''} ${can ? 'can' : ''}" ${can ? `data-a="flip" data-v="${id}"` : 'disabled'} title="${esc(s.name)}: ${esc(s.text)}">${esc(s.name)}${s.kind === 'flip' ? (used ? ' ✓' : ' ↷') : ''}</button>`; }).join('');
-  return `<div class="ov ${(UI.ovFold && UI.ovFold[2] != null ? UI.ovFold[2] : true) ? 'navoff' : ''}">
+  return `<div class="ov ${(UI.ovFold && UI.ovFold[2] != null ? UI.ovFold[2] : true) ? 'navoff' : ''}"><div class="ovL">
     <div class="panel ovhead" style="--pc:${p.color}"><div><button type="button" class="ovchar ovcharb" data-a="ovsheet" data-v="char" title="누르면 캐릭터 능력 보기">${esc(ch.name)} <small>ⓘ</small></button>${p.clock ? ' <span class="chip">시계탑</span>' : ''}<br><small class="ovclk">${p.clock ? '시계탑 건설됨' : '시계탑 해금 조건: ' + clockReqText(p)}</small><small class="ovsub">도시 ${cities(p).length} · 토끼 ${p.rabbits}/9 · 원더 ${p.wonders} · 항구 ${connectedPorts(p)}/4</small></div><div class="vp"><b>${p.vp}</b><small>승점</small></div><div class="stats ovhstats"><span>도시 점수 <b>${p.city}</b></span><span>산업 점수 <b>${p.ip}</b></span><button type="button" class="ovlink" data-a="ovsheet" data-v="used">사용 카드 <b>${p.cardsUsed}</b> ›</button><span>디스크 <b>${p.discs}</b></span><span>예상 <b>${sc.total}</b></span></div></div>
-    <div class="panel ovres"><div class="resbar">${RES.map(k => `<div class="res r-${k}" title="${RN[k]}"><span class="rv">${ic(k, 'big')}<b>${p.res[k]}</b></span>${k !== 'diamond' ? `<span class="ri">${ic('inc-' + k)}<b>${p.inc[k]}</b></span>` : '<span class="ri"><small>다이아</small></span>'}</div>`).join('')}</div></div>
+    <div class="panel ovres"><div class="resbar">${RES.map(k => `<div class="res r-${k}" title="${RN[k]}"><span class="rv">${ic(k, 'big')}<b>${p.res[k]}</b></span>${k !== 'diamond' ? `<span class="ri">${ic('inc-' + k)}<b>${p.inc[k]}</b></span>` : '<span class="ri"><small>다이아</small></span>'}</div>`).join('')}</div><div class="tagbar ovtags" title="내가 모은 스위트 태그 (사용한 카드 + 자동화한 카드)">${TAG_ORDER.map(k => { const n = tagCount(p, k); return `<div class="tgc ${n ? '' : 'zero'}" title="${esc(SWEET_NAME[k])} 태그 ${n}개">${tagIcon(k)}<b>${n}</b></div>`; }).join('')}</div></div>
     <div class="panel ovnav ${skillReady ? 'skglow' : ''}">${[['prosp','번영 트랙'],['ind','산업·음식 트랙'],['tech','기술 타일'],['skills','내 기술' + (skillReady ? ' ✦' : '')],['bld','건물'],['auto','자동화'],['miles','마일스톤'],['used','사용 카드']].map(([k, t]) => `<button type="button" class="ovnb ${k === 'skills' && skillReady ? 'skglow' : ''}" data-a="ovsheet" data-v="${k}">${t}</button>`).join('')}</div>
     <div class="panel ovhand" id="hand"><div class="panel-head"><h2>손패 <small>${p.hand.length}장</small></h2>${canSeeHand(pi) && myTurn && !G.turn.mainDone ? '<small>카드를 누르면 사용</small>' : ''}</div>${canSeeHand(pi) ? handView(p, pi) : hiddenHand(p)}</div>
-    <div class="panel"><div class="ovareas" style="--ac:${Math.ceil(ids.length / 3)}">${ids.map(id => ovAreaBtn(id, cp, canPick)).join('')}</div></div>
+    ${ovAidHTML()}</div><div class="ovR">
     <div class="ovmt"><div class="ovmt-l">
     <div class="ovsec"><button type="button" class="ovnb" data-a="ovsheet" data-v="bld">건물 ›</button><button type="button" class="ovnb" data-a="ovsheet" data-v="auto">자동화 ›</button></div>
     <div class="panel" id="map-panel"><button type="button" class="mapzoomb" data-a="ovsheet" data-v="map" title="지도 크게 보기" aria-label="지도 크게 보기">⤢</button><div class="mapwrap">${mapSVG(p, isCur)}</div></div>
@@ -5233,8 +5402,8 @@ function overviewBody(p, pi){
     <div class="panel ${skillReady ? 'skglow' : ''}">
       ${skills ? `<div class="ovskills">${skills}<button type="button" class="ovlink" data-a="ovsheet" data-v="skills">기술 타일 보기 ›</button></div>` : ''}<div class="ovmiles">${mstones}</div></div>
     </div></div>
-    ${ovAidHTML()}
-  </div>`;
+    <div class="panel"><div class="ovareas" style="--ac:${Math.ceil(ids.length / 3)}">${ids.map(id => ovAreaBtn(id, cp, canPick)).join('')}</div></div>
+  </div></div>`;
 }
 // 한눈에 보기에서 항목을 누르면 원래 패널(보상 · 규칙 포함)을 아래에서 올라오는 창으로 보여 줌
 const OV_SHEETS = {prosp:['번영 트랙', '번영 트랙'], ind:['산업 · 음식 트랙', '산업 · 음식 트랙'], miles:['마일스톤', '기술 타일 · 마일스톤'], skills:['보유 기술 타일', '보유 기술 타일'], tech:['기술 타일', '기술 타일 · 고급 기술'], bld:['건축물 토큰', '건축물 (건물)'], auto:['산업 열', '산업 열 (자동화)']};
@@ -5278,7 +5447,7 @@ function renderRaw(){
     ${ovOn() ? overviewBody(v, UI.view) : pageBody(v, UI.view)}
   </main>
   ${handoffOverlay()}
-  ${UI.tab === 'log' ? `<div class="drawer"><div class="drawer-head"><b>게임 기록</b><span class="cloud-row"><button class="btn" data-a="savelog">로그 저장(.txt)</button><button class="btn" data-a="savejson">턴별 데이터(.json)</button><button class="btn ghost" data-a="tab" data-v="board">닫기</button></span></div><p class="muted">${G.players.map(p => `${esc(p.name)} — ${esc(charName(p))}`).join(' · ')}</p><ol class="log">${G.log.map(l => `<li>${esc(l)}</li>`).join('')}</ol></div>` : ''}
+  ${UI.tab === 'log' ? `<div class="drawer"><div class="drawer-head"><b>게임 기록</b><span class="cloud-row"><button class="btn" data-a="savelog">로그 저장(.txt)</button><button class="btn" data-a="savejson">턴별 데이터(.json)</button><button class="btn ghost" data-a="tab" data-v="board">닫기</button></span></div><p class="muted">${G.players.map(p => `${esc(p.name)} — ${esc(charName(p))}`).join(' · ')}</p><div class="cloud-row logtabs"><button class="btn ${UI.logTab !== 'score' ? 'primary' : ''}" data-a="logtab" data-v="log">로그</button><button class="btn ${UI.logTab === 'score' ? 'primary' : ''}" data-a="logtab" data-v="score">${G.phase === 'end' ? '최종 점수 내역' : '현재 점수 내역'}</button></div>${UI.logTab === 'score' ? `<div class="panel final">${scoreTablesHTML(G.players.map((p,i) => ({p, i, s:score(p, i)})).sort((a,b) => b.s.total - a.s.total || b.p.rabbits - a.p.rabbits))}</div>` : `<ol class="log">${G.log.map(l => `<li>${esc(l)}</li>`).join('')}</ol>`}</div>` : ''}
   ${G.phase !== 'end' && !ovOn() ? jumpBar() : ''}
   ${ovOn() && UI.ovSheet ? ovSheetHTML(v, UI.view) : ''}
   ${ovOn() && G.phase !== 'end' ? ovDock(v) : ''}
@@ -5856,7 +6025,7 @@ function turnData(){
   return {version:2, exportedAt:new Date().toISOString(),
     game:{mode:G.mode, round:G.round, phase:G.phase, finished:G.phase === 'end', aiBonus:!!G.aiBonus, players:G.players.map((p, i) => ({seat:i, name:p.name, char:p.char, charName:charName(p), ai:p.ai || null, map:p.map || 'A'}))},
     final:G.players.map((p, i) => { let s = null; try { s = score(p, i); } catch(e){} return {seat:i, name:p.name, state:snapP(p, i), score:s}; }),
-    turns:G.tlog || [], log:logLines()};
+    turns:G.tlog || [], decisions:G.decs || [], log:logLines()};
 }
 function downloadText(name, text, type){
   const blob = new Blob([text], {type}), a = document.createElement('a');
@@ -5876,19 +6045,23 @@ function vpBreak(p){   // 출처별 게임 중 승점 — 기록되지 않은 �
   o.other = p.vp - o.char - o.passCard - o.passAid - o.skill - o.ai;
   return o;
 }
-function finalScreen(){
-  const rows = G.players.map((p,i) => ({p, i, s:score(p, i)})).sort((a,b) => b.s.total - a.s.total || b.p.rabbits - a.p.rabbits);
+function scoreTablesHTML(rows){
   const cols = [['game','게임 중 승점'],['prosp','번영 트랙'],['city','도시(×2)'],['top','최상단 건물 점수'],['gold','금(5당 1)'],['diamond','다이아'],['ports','항구'],['miles','마일스톤'],['finals','최종 점수 타일']];
-  return `<div class="panel final">
-    <h2>최종 점수</h2>
-    <div class="tablewrap"><table><thead><tr><th>순위</th><th>플레이어</th><th>캐릭터</th>${cols.map(c=>`<th>${c[1]}</th>`).join('')}<th>합계</th></tr></thead>
+  return `    <div class="tablewrap"><table><thead><tr><th>순위</th><th>플레이어</th><th>캐릭터</th>${cols.map(c=>`<th>${c[1]}</th>`).join('')}<th>합계</th></tr></thead>
     <tbody>${rows.map((r,k) => `<tr><td>${k+1}</td><td><span class="pdot" style="--pc:${r.p.color}"></span>${esc(r.p.name)}</td><td>${esc(charName(r.p))}</td>${cols.map(c=>`<td>${r.s[c[0]]}</td>`).join('')}<td><b>${r.s.total}</b></td></tr>`).join('')}</tbody></table></div>
     <h3>번영 트랙별 점수</h3>
     <div class="tablewrap"><table><thead><tr><th>플레이어</th>${PROSP.map(t => `<th>${esc(t.label)}</th>`).join('')}<th>번영 합계</th></tr></thead>
     <tbody>${rows.map(r => { const c = {terrain:Object.keys(r.p.tiles).length, rabbit:r.p.rabbits, road:r.p.roads.length, prop:propCount(r.p), auto:autoCount(r.p), ip:r.p.ip}; return `<tr><td><span class="pdot" style="--pc:${r.p.color}"></span>${esc(r.p.name)}</td>${PROSP.map((t, i) => `<td><b>${r.s.prospDetail[i]}</b><small class="muted"> (${c[t.key]}개 · ${r.p.prosp[i]}/${t.len}칸)</small></td>`).join('')}<td><b>${r.s.prosp}</b></td></tr>`; }).join('')}</tbody></table></div>
     <h3>게임 중 승점 내역</h3>
     <div class="tablewrap"><table><thead><tr><th>플레이어</th>${VP_COLS.filter(c => c[0] !== 'ai' || rows.some(r => vpBreak(r.p).ai)).map(c => `<th>${c[1]}</th>`).join('')}<th>게임 중 승점</th></tr></thead>
-    <tbody>${rows.map(r => { const b = vpBreak(r.p); return `<tr><td><span class="pdot" style="--pc:${r.p.color}"></span>${esc(r.p.name)}</td>${VP_COLS.filter(c => c[0] !== 'ai' || rows.some(x => vpBreak(x.p).ai)).map(c => `<td>${b[c[0]]}</td>`).join('')}<td><b>${r.p.vp}</b></td></tr>`; }).join('')}</tbody></table></div>
+    <tbody>${rows.map(r => { const b = vpBreak(r.p); return `<tr><td><span class="pdot" style="--pc:${r.p.color}"></span>${esc(r.p.name)}</td>${VP_COLS.filter(c => c[0] !== 'ai' || rows.some(x => vpBreak(x.p).ai)).map(c => `<td>${b[c[0]]}</td>`).join('')}<td><b>${r.p.vp}</b></td></tr>`; }).join('')}</tbody></table></div>`;
+}
+function finalScreen(){
+  const rows = G.players.map((p,i) => ({p, i, s:score(p, i)})).sort((a,b) => b.s.total - a.s.total || b.p.rabbits - a.p.rabbits);
+  const cols = [['game','게임 중 승점'],['prosp','번영 트랙'],['city','도시(×2)'],['top','최상단 건물 점수'],['gold','금(5당 1)'],['diamond','다이아'],['ports','항구'],['miles','마일스톤'],['finals','최종 점수 타일']];
+  return `<div class="panel final">
+    <h2>최종 점수</h2>
+    ${scoreTablesHTML(rows)}
     <p class="muted">동점이면 토끼 쿠키가 많은 플레이어가 이깁니다. 첫 게임 목표 270점, 익숙해지면 320점!</p>
     <p class="cloud-row"><button class="btn primary" data-a="savelog">로그 저장(.txt)</button><button class="btn" data-a="savejson">턴별 데이터(.json)</button></p>
     <h3>최종 영지 보드</h3><p class="muted">플레이어 이름을 눌러 게임이 끝났을 때의 영지 상황을 다시 볼 수 있어요.</p>
@@ -5909,6 +6082,7 @@ document.addEventListener('click', e => {
     case 'gback': renderSetup(); break;
     case 'setPick': collectNames(); SETUP.pick = v; renderSetup(); break;
     case 'setHand': collectNames(); SETUP.handMode = v; renderSetup(); break;
+    case 'logtab': UI.logTab = v; render(); break;
     case 'usedcards': UI.usedOpen = !UI.usedOpen; render(); break;
     case 'gopanel': {
       if (G && UI.view !== G.cur) UI.view = G.cur;
