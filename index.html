@@ -1154,7 +1154,7 @@ body.ovon{padding-bottom:96px !important}
 .ovlab-r{display:flex; flex-wrap:nowrap; gap:3px; grid-template-columns:none; min-width:0}
 .ovlab-r span{padding:1px 4px; font-size:11px; gap:2px; justify-content:center; white-space:nowrap} .ovlab-r .ic{height:13px !important; width:auto}
 .ovskp{flex-wrap:nowrap !important; align-items:center !important; padding-top:5px !important; padding-bottom:5px !important}
-.ovbar{position:relative} .ovbar .gl.gp{border-left-color:#8a8f98} .ovbar .gl{position:absolute; top:-2px; bottom:-2px; width:0; border-left:2px solid #c0392b; transform:translateX(-1px); text-decoration:none}
+.ovbar{position:relative} .ovbar .gl.gh{top:50%} .ovbar .gl.gp.gh{top:-2px; bottom:50%} .ovbar .gl.gp{border-left-color:#8a8f98} .ovbar .gl{position:absolute; top:-2px; bottom:-2px; width:0; border-left:2px solid #c0392b; transform:translateX(-1px); text-decoration:none}
 @media (max-width:700px){ .ovskp{flex-wrap:wrap !important} .ovlab{flex-wrap:wrap} }
 </style>
 <div id="app"></div>
@@ -5454,8 +5454,8 @@ function overviewBody(p, pi){
   const sc = score(p, pi), ch = charOf(p);
   const ids = Object.keys(G.areas).sort((x, y) => { const o = {special:0, basic:1, adv:2}; return (o[AREAS[x].cat] ?? 3) - (o[AREAS[y].cat] ?? 3) || (x < y ? -1 : 1); });
   const clockMet = p.clock ? null : clockReqs(p).filter(reqMet).length, clockAll = clockReqs(p).length;
-  const gl = Object.entries(LAB_GATE).filter(([i,g]) => p.props.lab < g).map(([i]) => `<u class="gl" style="left:${(+i/IND_TRACK.length*100).toFixed(1)}%"></u>`).join('');
-  const ibar = v => `<span class="ovbar" style="overflow:visible"><i style="width:${Math.min(100, Math.round(v / IND_TRACK.length * 100))}%"></i>${gl}${IP_ICONS.map(c => `<u class="gl gp" style="left:${(c.at/IND_TRACK.length*100).toFixed(1)}%"></u>`).join('')}</span>`;
+  const gl = Object.entries(LAB_GATE).filter(([i,g]) => p.props.lab < g).map(([i]) => `<u class="gl ${IP_ICONS.some(c => c.at === +i) ? 'gh' : ''}" style="left:${(+i/IND_TRACK.length*100).toFixed(1)}%"></u>`).join('');
+  const ibar = v => `<span class="ovbar" style="overflow:visible"><i style="width:${Math.min(100, Math.round(v / IND_TRACK.length * 100))}%"></i>${gl}${IP_ICONS.map(c => `<u class="gl gp ${Object.entries(LAB_GATE).some(([i, g]) => +i === c.at && p.props.lab < g) ? 'gh' : ''}" style="left:${(c.at/IND_TRACK.length*100).toFixed(1)}%"></u>`).join('')}</span>`;
   const bar = (v, max, ls) => `<span class="ovbar"${ls ? ' style="overflow:visible"' : ''}><i style="width:${Math.min(100, Math.round(v / max * 100))}%"></i>${(ls || []).map(x => `<u class="gl" style="left:${x.toFixed(1)}%"></u>`).join('')}</span>`;
   const prosp = PROSP.map((t, i) => `<div class="ovtr tone-${t.color}" data-a="ovsheet" data-v="prosp" title="${esc(t.label)} (누르면 보상 보기)">${ic(PROSP_TARGET[t.key])}${bar(p.prosp[i], t.len)}<b>${p.prosp[i]}/${t.len} <span class="ovpt" title="현재 칸 점수: 점수/개수">${p.prosp[i] <= 0 ? '0점' : (r => r ? r.pts + '/' + r.per : '')(prospRate(t, p.prosp[i])) + '점 → '}${p.prosp[i] <= 0 ? '' : `<em>${sc.prospDetail[i]}점</em>`}</span></b></div>`).join('');
   const mstones = G.milestones.map(m => { const d = MILESTONES.find(x => x.id === m.id); const v = Math.min(d.val(p), d.goal);
@@ -5489,7 +5489,7 @@ ${ovBldTable(p)}</div>
 const OV_SHEETS = {prosp:['번영 트랙', '번영 트랙'], ind:['산업 · 음식 트랙', '산업 · 음식 트랙'], miles:['마일스톤', '기술 타일 · 마일스톤'], skills:['보유 기술 타일', '보유 기술 타일'], tech:['기술 타일', '기술 타일 · 고급 기술'], bld:['건축물 토큰', '건축물 (건물)'], auto:['산업 열', '산업 열 (자동화)']};
 function ovBldTable(p){   // 건물 줄별 비용 · 효과 표 (번영 트랙 아래, 같은 가로폭)
   const th = ['tent', 'house', 'building'].map(t => `<b class="ovbt-h" style="--pc:${({tent:'var(--o)', house:'var(--gr)', building:'var(--gy, #7b8794)'})[t]}">${esc(PROP_TYPES[t].short)} <small>${p.props[t]}/5</small></b>`).join('');
-  const rows = [4, 3, 2, 1, 0].map(r => `<div class="ovbt-c"><span class="pcost">${r === 4 ? ic('endgame', 'tiny') : resHTML(woodAdj(p, ROW_COST[r]), 'cost')}</span></div>` + ['tent', 'house', 'building'].map(t => `<div class="ovbt-c ${p.props[t] > r ? 'built' : p.props[t] === r ? 'next' : ''}"><span>${r === 4 ? ic('endgame', 'tiny') : rowCellHTML(p, t, r).replace(LIMIT_CHIP, '<span class="cb-lim">한도+1</span>')}</span></div>`).join('')).join('');
+  const rows = [4, 3, 2, 1, 0].map(r => `<div class="ovbt-c"><span class="pcost">${resHTML(woodAdj(p, ROW_COST[r]), 'cost')}</span></div>` + ['tent', 'house', 'building'].map(t => `<div class="ovbt-c ${p.props[t] > r ? 'built' : p.props[t] === r ? 'next' : ''}"><span>${r === 4 ? ic('endgame', 'tiny') + `<small>${({tent:'토끼2', house:'건물1', building:'산업1'})[t]}</small>` : rowCellHTML(p, t, r).replace(LIMIT_CHIP, '<span class="cb-lim">한도+1</span>')}</span></div>`).join('')).join('');
   const cols3 = ['orange', 'green', 'grey'];   // 텐트·하우스·빌딩과 같은 순서의 산업 열
   const cof = `<div class="ovbt-c sep"><span class="pcost">${resHTML(woodAdj(p, COFFEE[0].cost), 'cost')}</span></div>` + COFFEE.map((c, i) => `<div class="ovbt-c sep ${p.props.coffee[i] ? 'built' : ''}"><span><small>커피</small> ${effHTML({t:'ibonus', c:c.c})}</span></div>`).join('');
   const aut = `<div class="ovbt-c sep2"><small>자동화</small></div>` + cols3.map(c => `<div class="ovbt-c sep2"><span>${effsHTML(colPrinted(p, c))}</span></div>`).join('');
