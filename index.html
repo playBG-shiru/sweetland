@@ -1154,7 +1154,8 @@ body.ovon{padding-bottom:96px !important}
 .ovlab-r{display:flex; flex-wrap:nowrap; gap:3px; grid-template-columns:none; min-width:0}
 .ovlab-r span{padding:1px 4px; font-size:11px; gap:2px; justify-content:center; white-space:nowrap} .ovlab-r .ic{height:13px !important; width:auto}
 .ovskp{flex-wrap:nowrap !important; align-items:center !important; padding-top:5px !important; padding-bottom:5px !important}
-.ovbar{position:relative} .ovbar .gl.gh{top:50%} .ovbar .gl.gp.gh{top:-2px; bottom:50%} .ovbar .gl.gp{border-left-color:#8a8f98} .ovbar .gl{position:absolute; top:-2px; bottom:-2px; width:0; border-left:2px solid #c0392b; transform:translateX(-1px); text-decoration:none}
+.ovbar{position:relative} .ovbt-c.sep2{min-width:0; overflow:visible; height:auto !important; max-height:none !important} .ovbt-c.sep2 > span{display:block; min-width:0; max-width:100%; white-space:normal !important} .ovbt-au{flex-wrap:nowrap !important; gap:1px !important} .ovbt-au .efs{display:inline-flex; flex-wrap:nowrap; gap:1px} .ovbt-au .ic{height:11px !important} .ovbt-au .q{white-space:nowrap !important; gap:0; font-size:10px} .ovbt-au *{white-space:normal !important; min-width:0; max-width:100%} .ovbt-au small{font-size:9px !important; display:block} .ovbt-au{white-space:normal; font-size:9.5px; line-height:1.15; min-width:0; max-width:100%; overflow-wrap:anywhere; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:2px; border-top:1px dashed var(--line); margin-top:2px; padding-top:2px}
+.ovbar .gl.gh{top:50%} .ovbar .gl.gp.gh{top:-2px; bottom:50%} .ovbar .gl.gp{border-left-color:#8a8f98} .ovbar .gl{position:absolute; top:-2px; bottom:-2px; width:0; border-left:2px solid #c0392b; transform:translateX(-1px); text-decoration:none}
 @media (max-width:700px){ .ovskp{flex-wrap:wrap !important} .ovlab{flex-wrap:wrap} }
 </style>
 <div id="app"></div>
@@ -5470,7 +5471,7 @@ function overviewBody(p, pi){
     <div class="panel ovhand" id="hand"><div class="panel-head"><h2>손패 <small>${p.hand.length}장</small></h2>${canSeeHand(pi) && myTurn && !G.turn.mainDone ? '<small>카드를 누르면 사용</small>' : ''}</div>${canSeeHand(pi) ? handView(p, pi) : hiddenHand(p)}</div>
     ${ovAidHTML()}</div><div class="ovR">
     <div class="ovmt"><div class="ovmt-l">
-    <div class="ovsec"><button type="button" class="ovnb" data-a="ovsheet" data-v="bld">건물 ›</button><button type="button" class="ovnb" data-a="ovsheet" data-v="auto">자동화 ›</button><button type="button" class="ovnb" data-a="ovsheet" data-v="skills">기술 타일 ›</button></div>
+    <div class="ovsec"><button type="button" class="ovnb" data-a="ovsheet" data-v="bld">건물 ›</button><button type="button" class="ovnb" data-a="ovsheet" data-v="auto">자동화 ›</button><button type="button" class="ovnb" data-a="ovsheet" data-v="miles">기술 타일 ›</button></div>
     <div class="panel" id="map-panel"><button type="button" class="mapzoomb" data-a="ovsheet" data-v="map" title="지도 크게 보기" aria-label="지도 크게 보기">⤢</button><div class="mapwrap">${mapSVG(p, isCur)}</div></div>
     <div class="panel ovskp">${skills ? `<div class="ovskills ${skillReady ? 'skglow' : ''}">${skills}</div>` : ''}<div class="ovlab"><b>${ic('lab', 'tiny')} 우유 연구소 <small>${p.props.lab}/4</small></b><div class="ovlab-r">${LAB_COST.map((c, i) => `<span class="${p.props.lab > i ? 'built' : p.props.lab === i ? 'next' : ''}">${resHTML(woodAdj(p, c), 'cost')}</span>`).join('')}</div></div></div>
     </div><div class="ovmt-r">
@@ -5487,12 +5488,19 @@ ${ovBldTable(p)}</div>
 }
 // 한눈에 보기에서 항목을 누르면 원래 패널(보상 · 규칙 포함)을 아래에서 올라오는 창으로 보여 줌
 const OV_SHEETS = {prosp:['번영 트랙', '번영 트랙'], ind:['산업 · 음식 트랙', '산업 · 음식 트랙'], miles:['마일스톤', '기술 타일 · 마일스톤'], skills:['보유 기술 타일', '보유 기술 타일'], tech:['기술 타일', '기술 타일 · 고급 기술'], bld:['건축물 토큰', '건축물 (건물)'], auto:['산업 열', '산업 열 (자동화)']};
+const AU_TXT = ['gainPerInc','incPerInc','trade','ifTerrain','incPerTag','ifTags','perCount','terrainPerTag','ifCount','tradeAny','findTag','cardTrade','terrainIfTag','goldPerTerrain','goldPerIp'];
+function autoIcons(effs){   // 조건 글 없이 결과 아이콘만
+  const one = e => { if (!AU_TXT.includes(e.t)) return effHTML(e);
+    if (e.effs) return e.effs.map(one).join(''); if (e.gain) return resHTML(e.gain); if (e.r && e.t !== 'trade') return effHTML({t:'income', r:e.r});
+    if (e.draw) return q(e.draw, 'draw'); if (e.n && e.t === 'terrainIfTag') return q(e.n, 'terrain'); if (e.per && e.t.startsWith('gold')) return q(e.per, 'gold'); return ''; };
+  return (effs || []).map(one).join('').replace(/<small[^>]*>[^<]*<\/small>/g, '').replace(/<span class="q">\s*<\/span>/g, '');
+}
 function ovBldTable(p){   // 건물 줄별 비용 · 효과 표 (번영 트랙 아래, 같은 가로폭)
   const th = ['tent', 'house', 'building'].map(t => `<b class="ovbt-h" style="--pc:${({tent:'var(--o)', house:'var(--gr)', building:'var(--gy, #7b8794)'})[t]}">${esc(PROP_TYPES[t].short)} <small>${p.props[t]}/5</small></b>`).join('');
   const rows = [4, 3, 2, 1, 0].map(r => `<div class="ovbt-c"><span class="pcost">${resHTML(woodAdj(p, ROW_COST[r]), 'cost')}</span></div>` + ['tent', 'house', 'building'].map(t => `<div class="ovbt-c ${p.props[t] > r ? 'built' : p.props[t] === r ? 'next' : ''}"><span>${r === 4 ? ic('endgame', 'tiny') + `<small>${({tent:'토끼2', house:'건물1', building:'산업1'})[t]}</small>` : rowCellHTML(p, t, r).replace(LIMIT_CHIP, '<span class="cb-lim">한도+1</span>')}</span></div>`).join('')).join('');
   const cols3 = ['orange', 'green', 'grey'];   // 텐트·하우스·빌딩과 같은 순서의 산업 열
   const cof = `<div class="ovbt-c sep"><span class="pcost">${resHTML(woodAdj(p, COFFEE[0].cost), 'cost')}</span></div>` + COFFEE.map((c, i) => `<div class="ovbt-c sep ${p.props.coffee[i] ? 'built' : ''}"><span><small>커피</small> ${effHTML({t:'ibonus', c:c.c})}</span></div>`).join('');
-  const aut = `<div class="ovbt-c sep2"><small>자동화</small></div>` + cols3.map(c => `<div class="ovbt-c sep2"><span>${effsHTML(colPrinted(p, c))}</span></div>`).join('');
+  const aut = `<div class="ovbt-c sep2"><small>자동화</small></div>` + cols3.map(c => `<div class="ovbt-c sep2"><span>${effsHTML(colPrinted(p, c))}${p.cols[c].map(id => `<span class="ovbt-au">${autoIcons(cardOf(id).auto)}</span>`).join('')}</span></div>`).join('');
   return `<div class="ovbtw"><div class="ovbtt">건물 비용 · 효과</div><div class="ovbt"><b class="ovbt-h">비용</b>${th}${rows}${cof}${aut}</div></div>`;
 }
 const r4note = () => '위 줄일수록 나중에 지음';
