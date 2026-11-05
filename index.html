@@ -5410,7 +5410,7 @@ function ovFitHand(){
 }
 window.addEventListener('resize', () => ovFitHand());
 window.addEventListener('load', () => { setTimeout(ovFitHand, 100); setTimeout(ovFitHand, 700); });
-const OV_SZ_KEY = 'sweetland-ovsize-v1';
+const OV_SZ_KEY = 'sweetland-ovsize-v3';
 function ovSizes(){ if (!UI.ovSize) { try { UI.ovSize = JSON.parse(localStorage.getItem(OV_SZ_KEY) || '{}') || {}; } catch (e) { UI.ovSize = {}; } } return UI.ovSize; }
 document.addEventListener('pointerup', () => {
   try {
