@@ -896,7 +896,7 @@ img{-webkit-user-drag:none}
 .ov .panel.ovf{position:relative}
 .ovfoldb{position:absolute; top:3px; right:3px; width:20px; height:20px; padding:0; border:1px solid var(--line); background:var(--surface); color:var(--muted); border-radius:6px; font-size:11px; line-height:1; cursor:pointer; z-index:2; opacity:.85}
 .ov .panel.ovcollapsed{padding-top:0 !important; padding-bottom:0 !important; min-height:26px}
-.ov .panel.ovcollapsed > *:not(.ovfoldb){display:none !important}
+.ov .panel.ovcollapsed > *:not(.ovfoldb):not(.ovtl){display:none !important}
 .ov .panel.ovcollapsed::before{content:attr(data-ttl); display:block; font-size:12px; font-weight:700; color:var(--muted); line-height:26px}
 .ovhead{padding:6px 34px 6px 10px !important; gap:6px}
 .ovhead .ovchar{font-size:14px} .ovhead small{font-size:10.5px} .ovhead .vp b{font-size:17px} .ovhead .vp small{font-size:9.5px}
@@ -930,9 +930,9 @@ body.ovon .ptab{padding:2px 8px; font-size:12px} body.ovon .ptab em{font-size:9.
 @media (max-width:700px){ .ovhand .card{zoom:.7; flex:0 0 112px !important; width:112px !important; min-width:0 !important; max-width:none !important} .ovhand .hand{gap:4px} }
 @media (max-width:700px){ .ovareas{gap:4px} .ovarea{min-height:0 !important; padding:3px 5px 4px !important; gap:1px !important} .ovarea .ovnm{font-size:11.5px} .ovarea .ovslots{margin-top:2px} .ovarea .ovslots i{width:9px; height:9px} }
 @keyframes skblink{0%,100%{box-shadow:0 0 0 0 transparent; background-color:var(--surface)} 50%{box-shadow:0 0 0 3px #20b2a0, 0 0 14px #20b2a0; background-color:#dff7f2}}
-.skglow{animation:skblink 1.1s ease-in-out infinite; border-color:#20b2a0 !important}
+.skglow{border-color:#20b2a0 !important; box-shadow:0 0 0 2px #20b2a0, 0 0 10px rgba(32,178,160,.55); background-color:#eafaf6}   /* 깜빡이지 않고 불만 켜 둠: 기술을 쓰면 꺼짐 */
 .ovsk.can{border-color:#20b2a0; background:#dff7f2}
-@media (prefers-reduced-motion:reduce){.skglow{animation:none; outline:3px solid #20b2a0}}
+
 .opts.tiles{grid-auto-rows:1fr; display:grid; grid-template-columns:repeat(auto-fill,minmax(136px,1fr)); gap:6px; align-items:stretch}
 .opts.tiles .opt{max-width:none !important; width:auto !important; min-width:0; padding:6px 6px 7px !important; align-items:center; text-align:center; justify-content:flex-start}
 .opts.tiles .opt-tile{width:100%; max-width:150px; margin:0 auto 4px}
@@ -1111,6 +1111,51 @@ body.ovon{padding-bottom:96px !important}
 @media (min-width:1100px){ .ovL,.ovR{display:grid} .ovL > *,.ovR > *{order:0 !important} }
 
 @media (min-width:1100px){ .ov .ovR{margin-top:-37px; position:relative; z-index:1} }
+
+.ovbtw{margin-top:10px; border-top:1px dashed var(--line, #ddd); padding-top:8px}
+.ovbtt{font-weight:700; font-size:13px; margin-bottom:5px} .ovbtt small{font-weight:400; opacity:.65; margin-left:4px}
+.ovbt{display:grid; grid-template-columns:auto repeat(3,minmax(0,1fr)); gap:3px; font-size:12px; align-items:stretch}
+.ovbt-h{font-size:12px; text-align:center; padding:3px 2px; border-radius:6px; background:color-mix(in srgb, var(--pc, #999) 22%, transparent); border-bottom:2px solid var(--pc, #999)} .ovbt-h small{font-weight:400; opacity:.7}
+.ovbt-c{display:flex; align-items:center; justify-content:center; padding:3px 3px; border-radius:6px; background:rgba(0,0,0,.035); min-height:30px; text-align:center; line-height:1.15}
+.ovbt-c.built{opacity:.45; text-decoration:none; background:rgba(60,160,80,.12)} .ovbt-c.next{box-shadow:inset 0 0 0 2px var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent)}
+.ovbt-c .ic{height:15px !important; width:auto} .ovbt-c .cb-lim{font-size:9.5px; padding:0 3px} .ovbt-c small{font-size:10px}
+@media (max-width:700px){ .ovbt{font-size:11px; gap:2px} .ovbt-c{min-height:26px; padding:2px} }
+
+.ovmiles-w{display:flex; flex-wrap:nowrap; gap:6px; margin-top:8px} .ovmiles-w .ovms{flex:1 1 0; min-width:0; text-align:center; font-size:12px; padding:5px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+@media (max-width:700px){ .ovmiles-w{flex-wrap:wrap} .ovmiles-w .ovms{flex:1 1 30%} }
+.ovbtw{margin-top:6px; padding-top:6px} .ovbtt{font-size:12px; margin-bottom:3px}
+.ovbt{gap:2px !important; font-size:11px !important} .ovbt-h{padding:2px 1px !important; font-size:11px !important}
+.ovbt-c{min-height:20px !important; padding:1px 2px !important} .ovbt-c .ic{height:13px !important}
+
+.ovbt-c.sep{border-top:1px solid rgba(0,0,0,.18); border-radius:0 0 6px 6px}
+.ovmiles-w{margin-top:4px !important; gap:4px !important} .ovmiles-w .ovms{font-size:11px !important; padding:2px 5px !important; line-height:1.2}
+
+.ovbt-c.sep{border-top:3px solid #8a6a4a !important; border-radius:0 0 6px 6px; margin-top:6px; background:rgba(138,106,74,.16) !important; position:relative}
+.ovbt-c.sep.built{opacity:.5}
+.ovbt-c.sep2{border-top:1px dashed rgba(0,0,0,.3); margin-top:4px; background:rgba(120,90,160,.1)}
+@media (min-width:1100px){ .ov{grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr) !important} }
+
+.ov .ovtl{position:absolute; left:92px; top:0; height:26px; padding:0 4px; border:0; background:none; color:var(--accent); font-size:12px; font-weight:600; text-decoration:underline; cursor:pointer; z-index:2}
+.ov .panel.ovnav:not(.ovcollapsed){padding-top:28px !important; position:relative}
+.ov .panel.ovnav:not(.ovcollapsed)::before{content:'자세히 보기'; position:absolute; left:8px; top:0; line-height:26px; font-size:12px; font-weight:700; color:var(--muted)}
+
+.ovskills.skglow{padding:5px; border-radius:8px; border:1px solid #20b2a0}
+
+.ovskp{display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap}
+.ovskp .ovskills{flex:0 1 auto; max-width:46%; margin-top:0 !important; justify-content:flex-start}
+.ovlab{flex:1 1 150px; min-width:0; font-size:12px} .ovlab > b{display:block; font-size:12px; margin-bottom:3px} .ovlab > b small{font-weight:400; opacity:.65}
+.ovlab-r{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:3px}
+.ovlab-r span{display:flex; align-items:center; justify-content:space-between; gap:4px; padding:2px 5px; border-radius:6px; background:rgba(0,0,0,.04)} .ovlab-r small{font-size:10.5px; opacity:.75; white-space:nowrap}
+.ovlab-r span.built{opacity:.45; background:rgba(60,160,80,.14)} .ovlab-r span.next{box-shadow:inset 0 0 0 2px var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent)}
+@media (max-width:700px){ .ovskp .ovskills{max-width:100%} }
+
+.ovlab{display:flex; align-items:center; gap:6px; flex-wrap:nowrap; font-size:11px; flex:1 1 0}
+.ovlab > b{display:inline-flex; align-items:center; gap:2px; margin:0; font-size:11px; white-space:nowrap}
+.ovlab-r{display:flex; flex-wrap:nowrap; gap:3px; grid-template-columns:none; min-width:0}
+.ovlab-r span{padding:1px 4px; font-size:11px; gap:2px; justify-content:center; white-space:nowrap} .ovlab-r .ic{height:13px !important; width:auto}
+.ovskp{flex-wrap:nowrap !important; align-items:center !important; padding-top:5px !important; padding-bottom:5px !important}
+.ovbar{position:relative} .ovbar .gl.gp{border-left-color:#8a8f98} .ovbar .gl{position:absolute; top:-2px; bottom:-2px; width:0; border-left:2px solid #c0392b; transform:translateX(-1px); text-decoration:none}
+@media (max-width:700px){ .ovskp{flex-wrap:wrap !important} .ovlab{flex-wrap:wrap} }
 </style>
 <div id="app"></div>
 <script>
@@ -2590,7 +2635,7 @@ async function runAction(fn, isMain){
   ACT = {flipped:new Set(), ibQueue:[], ibBusy:false};
   try {
     const ok = await fn();
-    if (ok !== false) { if (isMain) G.turn.mainDone = true; if (ACT && ACT.drew) UI.undo = []; else UI.undo.push(snap); changed = true; tlogPush(info, pi0, before, !!isMain); }
+    if (ok !== false) { if (isMain) G.turn.mainDone = true; UI.undo = (ACT && ACT.drew) ? [] : [snap]; changed = true; /* 되돌리기는 바로 이전 행동 하나만, 카드를 받았으면 불가 */ tlogPush(info, pi0, before, !!isMain); }
   } catch (e) {
     if (e === CANCEL) { G = snap; log('행동을 취소했습니다'); }
     else { console.error(e); G = snap; toast('오류: ' + e.message); }
@@ -3371,7 +3416,7 @@ function freeAction(pi, key){ ACT_INFO = {kind:'free', key};
 function claimMilestone(pi, id){
   const m = G.milestones.find(x => x.id === id), p = P(pi), def = MILESTONES.find(x => x.id === id);
   if (m.taken != null || !def.test(p)) return;
-  UI.undo.push(clone(G));
+  UI.undo = [clone(G)];
   m.taken = pi; p.miles++; log(`${p.name}: 마일스톤 '${def.name}' 획득 (게임 종료 시 10점)`);
   if (G.milestones.filter(x => x.taken != null).length >= 3) G.milestones.forEach(x => { if (x.taken == null) x.taken = -1; });
   netPush(); render();
@@ -5349,7 +5394,7 @@ function ovAidHTML(){
   }).join('');
   return `<div class="panel ovaid ${pick ? 'picking' : ''}" id="aid-panel"><div class="ovaidh"><b>라운드 지원</b><small>${pick ? '빈 열을 눌러 토큰 놓기' : '초록=패스 지원'}</small></div><div class="ovaidg" style="--nc:${G.aid.length}">${cols}</div></div>`;
 }
-const OV_TTL = ['캐릭터', '자원', '자세히 보기', '손패', '행동칸', '영지 지도', '트랙', '기술 · 마일스톤', '라운드 지원'];
+const OV_TTL = ['캐릭터', '자원', '자세히 보기', '손패', '행동칸', '영지 지도', '트랙', '건물 비용 · 효과', '라운드 지원'];
 function ovFitHand(){
   try {
     const hand = document.querySelector('.ovhand .hand'); if (!hand) return;
@@ -5389,6 +5434,7 @@ function ovFoldInit(){
     [qq('.ov .ovhead'), qq('.ov .ovres'), qq('.ov .ovnav'), qq('.ov .ovhand'), qq('.ov .panel:has(> .ovareas)'), qq('#map-panel'), ...document.querySelectorAll('.ov .ovmt-r > .panel'), qq('.ov .ovaid')].forEach((el, i) => {
       if (!el) return; el.classList.add('ovf'); el.dataset.ttl = OV_TTL[i] || '';
       const off = !!(UI.ovFold[i] != null ? UI.ovFold[i] : i === 2) && !(i === 8 && UI.prompt && UI.prompt.type === 'aid'); el.classList.toggle('ovcollapsed', off);
+      if (i === 2) { const tl = document.createElement('button'); tl.type = 'button'; tl.className = 'ovtl'; tl.dataset.a = 'ovsheet'; tl.dataset.v = 'skills'; tl.textContent = '기술 타일 보기 ›'; el.appendChild(tl); }
       const b = document.createElement('button'); b.type = 'button'; b.className = 'ovfoldb'; b.dataset.a = 'ovfold'; b.dataset.v = i;
       b.title = off ? '펼치기' : '접기'; b.textContent = off ? '▾' : '▴'; el.appendChild(b);
       const sz = ovSizes()[i]; el.dataset.rz = i;
@@ -5408,7 +5454,9 @@ function overviewBody(p, pi){
   const sc = score(p, pi), ch = charOf(p);
   const ids = Object.keys(G.areas).sort((x, y) => { const o = {special:0, basic:1, adv:2}; return (o[AREAS[x].cat] ?? 3) - (o[AREAS[y].cat] ?? 3) || (x < y ? -1 : 1); });
   const clockMet = p.clock ? null : clockReqs(p).filter(reqMet).length, clockAll = clockReqs(p).length;
-  const bar = (v, max) => `<span class="ovbar"><i style="width:${Math.min(100, Math.round(v / max * 100))}%"></i></span>`;
+  const gl = Object.entries(LAB_GATE).filter(([i,g]) => p.props.lab < g).map(([i]) => `<u class="gl" style="left:${(+i/IND_TRACK.length*100).toFixed(1)}%"></u>`).join('');
+  const ibar = v => `<span class="ovbar" style="overflow:visible"><i style="width:${Math.min(100, Math.round(v / IND_TRACK.length * 100))}%"></i>${gl}${IP_ICONS.map(c => `<u class="gl gp" style="left:${(c.at/IND_TRACK.length*100).toFixed(1)}%"></u>`).join('')}</span>`;
+  const bar = (v, max, ls) => `<span class="ovbar"${ls ? ' style="overflow:visible"' : ''}><i style="width:${Math.min(100, Math.round(v / max * 100))}%"></i>${(ls || []).map(x => `<u class="gl" style="left:${x.toFixed(1)}%"></u>`).join('')}</span>`;
   const prosp = PROSP.map((t, i) => `<div class="ovtr tone-${t.color}" data-a="ovsheet" data-v="prosp" title="${esc(t.label)} (누르면 보상 보기)">${ic(PROSP_TARGET[t.key])}${bar(p.prosp[i], t.len)}<b>${p.prosp[i]}/${t.len} <span class="ovpt" title="현재 칸 점수: 점수/개수">${p.prosp[i] <= 0 ? '0점' : (r => r ? r.pts + '/' + r.per : '')(prospRate(t, p.prosp[i])) + '점 → '}${p.prosp[i] <= 0 ? '' : `<em>${sc.prospDetail[i]}점</em>`}</span></b></div>`).join('');
   const mstones = G.milestones.map(m => { const d = MILESTONES.find(x => x.id === m.id); const v = Math.min(d.val(p), d.goal);
     return `<span class="ovms ${m.taken != null ? 'taken' : ''} ${v >= d.goal ? 'ok' : ''}" data-a="ovsheet" data-v="miles" title="${esc(d.text)}">${esc(d.name)} <b>${m.taken != null && m.taken >= 0 ? (P(m.taken).name) : v + '/' + d.goal}</b></span>`; }).join('');
@@ -5417,27 +5465,37 @@ function overviewBody(p, pi){
     return `<button type="button" class="ovsk ${used ? 'used' : ''} ${can ? 'can' : ''}" ${can ? `data-a="flip" data-v="${id}"` : 'disabled'} title="${esc(s.name)}: ${esc(s.text)}">${esc(s.name)}${s.kind === 'flip' ? (used ? ' ✓' : ' ↷') : ''}</button>`; }).join('');
   return `<div class="ov ${(UI.ovFold && UI.ovFold[2] != null ? UI.ovFold[2] : true) ? 'navoff' : ''}"><div class="ovL">
     <div class="panel ovhead" style="--pc:${p.color}"><div><button type="button" class="ovchar ovcharb" data-a="ovsheet" data-v="char" title="누르면 캐릭터 능력 보기">${esc(ch.name)} <small>ⓘ</small></button>${p.clock ? ' <span class="chip">시계탑</span>' : ''}<br><small class="ovclk">${p.clock ? '시계탑 건설됨' : '시계탑 해금 조건: ' + clockReqText(p)}</small><small class="ovsub">도시 ${cities(p).length} · 토끼 ${p.rabbits}/9 · 원더 ${p.wonders} · 항구 ${connectedPorts(p)}/4</small></div><div class="vp"><b>${p.vp}</b><small>승점</small></div><div class="stats ovhstats"><span>도시 점수 <b>${p.city}</b></span><span>산업 점수 <b>${p.ip}</b></span><button type="button" class="ovlink" data-a="ovsheet" data-v="used">사용 카드 <b>${p.cardsUsed}</b> ›</button><span>디스크 <b>${p.discs}</b></span><span>예상 <b>${sc.total}</b></span></div></div>
-    <div class="panel ovres"><div class="resbar">${RES.map(k => `<div class="res r-${k}" title="${RN[k]}"><span class="rv">${ic(k, 'big')}<b>${p.res[k]}</b></span>${k !== 'diamond' ? `<span class="ri">${ic('inc-' + k)}<b>${p.inc[k]}</b></span>` : '<span class="ri"><small>다이아</small></span>'}</div>`).join('')}</div><div class="tagbar ovtags" title="내가 모은 스위트 태그 (사용한 카드 + 자동화한 카드)">${TAG_ORDER.map(k => { const n = tagCount(p, k); return `<div class="tgc ${n ? '' : 'zero'}" title="${esc(SWEET_NAME[k])} 태그 ${n}개">${tagIcon(k)}<b>${n}</b></div>`; }).join('')}</div></div>
+    <div class="panel ovres"><div class="resbar">${RES.map(k => `<div class="res r-${k}" title="${RN[k]}"><span class="rv">${ic(k, 'big')}<b>${p.res[k]}</b></span>${k !== 'diamond' ? `<span class="ri">${ic('inc-' + k)}<b>${p.inc[k]}</b></span>` : '<span class="ri"><small>다이아</small></span>'}</div>`).join('')}</div><div class="tagbar ovtags" title="내가 모은 스위트 태그 (사용한 카드 + 자동화한 카드)">${TAG_ORDER.map(k => { const n = tagCount(p, k); return `<div class="tgc ${n ? '' : 'zero'}" title="${esc(SWEET_NAME[k])} 태그 ${n}개">${tagIcon(k)}<b>${n}</b></div>`; }).join('')}</div><div class="ovmiles ovmiles-w">${mstones}</div></div>
     <div class="panel ovnav ${skillReady ? 'skglow' : ''}">${[['prosp','번영 트랙'],['ind','산업·음식 트랙'],['tech','기술 타일'],['skills','내 기술' + (skillReady ? ' ✦' : '')],['bld','건물'],['auto','자동화'],['miles','마일스톤'],['used','사용 카드']].map(([k, t]) => `<button type="button" class="ovnb ${k === 'skills' && skillReady ? 'skglow' : ''}" data-a="ovsheet" data-v="${k}">${t}</button>`).join('')}</div>
     <div class="panel ovhand" id="hand"><div class="panel-head"><h2>손패 <small>${p.hand.length}장</small></h2>${canSeeHand(pi) && myTurn && !G.turn.mainDone ? '<small>카드를 누르면 사용</small>' : ''}</div>${canSeeHand(pi) ? handView(p, pi) : hiddenHand(p)}</div>
     ${ovAidHTML()}</div><div class="ovR">
     <div class="ovmt"><div class="ovmt-l">
-    <div class="ovsec"><button type="button" class="ovnb" data-a="ovsheet" data-v="bld">건물 ›</button><button type="button" class="ovnb" data-a="ovsheet" data-v="auto">자동화 ›</button></div>
+    <div class="ovsec"><button type="button" class="ovnb" data-a="ovsheet" data-v="bld">건물 ›</button><button type="button" class="ovnb" data-a="ovsheet" data-v="auto">자동화 ›</button><button type="button" class="ovnb" data-a="ovsheet" data-v="skills">기술 타일 ›</button></div>
     <div class="panel" id="map-panel"><button type="button" class="mapzoomb" data-a="ovsheet" data-v="map" title="지도 크게 보기" aria-label="지도 크게 보기">⤢</button><div class="mapwrap">${mapSVG(p, isCur)}</div></div>
+    <div class="panel ovskp">${skills ? `<div class="ovskills ${skillReady ? 'skglow' : ''}">${skills}</div>` : ''}<div class="ovlab"><b>${ic('lab', 'tiny')} 우유 연구소 <small>${p.props.lab}/4</small></b><div class="ovlab-r">${LAB_COST.map((c, i) => `<span class="${p.props.lab > i ? 'built' : p.props.lab === i ? 'next' : ''}">${resHTML(woodAdj(p, c), 'cost')}</span>`).join('')}</div></div></div>
     </div><div class="ovmt-r">
     <div class="ovsec"><button type="button" class="ovnb" data-a="ovsheet" data-v="prosp">번영 트랙 ›</button><button type="button" class="ovnb" data-a="ovsheet" data-v="ind">산업 · 음식 트랙 ›</button></div>
     <div class="panel ovtracks">${prosp}
-      <div class="ovtr tone-orange" data-a="ovsheet" data-v="ind">${ic('carriage')}${bar(p.ind.car + 1, IND_TRACK.length)}<b>마차 ${p.ind.car + 1}</b></div>
-      ${p.ind.loc >= 0 ? `<div class="ovtr tone-green" data-a="ovsheet" data-v="ind">${ic('loco')}${bar(p.ind.loc + 1, IND_TRACK.length)}<b>기관차 ${p.ind.loc + 1}</b></div>` : ''}
-      <div class="ovtr tone-green" data-a="ovsheet" data-v="ind">${ic('food')}${bar(p.food, FOOD_MAX)}<b>음식 ${p.food}/${FOOD_MAX}</b></div></div>
-    <div class="panel ${skillReady ? 'skglow' : ''}">
-      ${skills ? `<div class="ovskills">${skills}<button type="button" class="ovlink" data-a="ovsheet" data-v="skills">기술 타일 보기 ›</button></div>` : ''}<div class="ovmiles">${mstones}</div></div>
+      <div class="ovtr tone-orange" data-a="ovsheet" data-v="ind">${ic('carriage')}${ibar(p.ind.car + 1)}<b>마차 ${p.ind.car + 1}</b></div>
+      ${p.ind.loc >= 0 ? `<div class="ovtr tone-green" data-a="ovsheet" data-v="ind">${ic('loco')}${ibar(p.ind.loc + 1)}<b>기관차 ${p.ind.loc + 1}</b></div>` : ''}
+      <div class="ovtr tone-green" data-a="ovsheet" data-v="ind">${ic('food')}${bar(p.food, FOOD_MAX, Object.keys(FOOD_TRACK).map(k => +k / FOOD_MAX * 100))}<b>음식 ${p.food}/${FOOD_MAX}</b></div></div>
+    <div class="panel">
+${ovBldTable(p)}</div>
     </div></div>
     <div class="panel"><div class="ovareas" style="--ac:${Math.ceil(ids.length / 3)}">${ids.map(id => ovAreaBtn(id, cp, canPick)).join('')}</div></div>
   </div></div>`;
 }
 // 한눈에 보기에서 항목을 누르면 원래 패널(보상 · 규칙 포함)을 아래에서 올라오는 창으로 보여 줌
 const OV_SHEETS = {prosp:['번영 트랙', '번영 트랙'], ind:['산업 · 음식 트랙', '산업 · 음식 트랙'], miles:['마일스톤', '기술 타일 · 마일스톤'], skills:['보유 기술 타일', '보유 기술 타일'], tech:['기술 타일', '기술 타일 · 고급 기술'], bld:['건축물 토큰', '건축물 (건물)'], auto:['산업 열', '산업 열 (자동화)']};
+function ovBldTable(p){   // 건물 줄별 비용 · 효과 표 (번영 트랙 아래, 같은 가로폭)
+  const th = ['tent', 'house', 'building'].map(t => `<b class="ovbt-h" style="--pc:${({tent:'var(--o)', house:'var(--gr)', building:'var(--gy, #7b8794)'})[t]}">${esc(PROP_TYPES[t].short)} <small>${p.props[t]}/5</small></b>`).join('');
+  const rows = [4, 3, 2, 1, 0].map(r => `<div class="ovbt-c"><span class="pcost">${r === 4 ? ic('endgame', 'tiny') : resHTML(woodAdj(p, ROW_COST[r]), 'cost')}</span></div>` + ['tent', 'house', 'building'].map(t => `<div class="ovbt-c ${p.props[t] > r ? 'built' : p.props[t] === r ? 'next' : ''}"><span>${r === 4 ? ic('endgame', 'tiny') : rowCellHTML(p, t, r).replace(LIMIT_CHIP, '<span class="cb-lim">한도+1</span>')}</span></div>`).join('')).join('');
+  const cols3 = ['orange', 'green', 'grey'];   // 텐트·하우스·빌딩과 같은 순서의 산업 열
+  const cof = `<div class="ovbt-c sep"><span class="pcost">${resHTML(woodAdj(p, COFFEE[0].cost), 'cost')}</span></div>` + COFFEE.map((c, i) => `<div class="ovbt-c sep ${p.props.coffee[i] ? 'built' : ''}"><span><small>커피</small> ${effHTML({t:'ibonus', c:c.c})}</span></div>`).join('');
+  const aut = `<div class="ovbt-c sep2"><small>자동화</small></div>` + cols3.map(c => `<div class="ovbt-c sep2"><span>${effsHTML(colPrinted(p, c))}</span></div>`).join('');
+  return `<div class="ovbtw"><div class="ovbtt">건물 비용 · 효과</div><div class="ovbt"><b class="ovbt-h">비용</b>${th}${rows}${cof}${aut}</div></div>`;
+}
+const r4note = () => '위 줄일수록 나중에 지음';
 function ovSheetHTML(p, pi){
   const k = UI.ovSheet; if (!k || !p) return '';
   let inner = '', title = '';
@@ -5521,7 +5579,7 @@ function actionBar(cp){
   return `<div class="abar" style="--pc:${cp.color}">
     <div class="abar-text"><span class="pdot"></span><b>${esc(cp.name)}</b>의 차례 — ${cp.passed ? '패스했습니다. 확정하면 다음 플레이어로 넘어갑니다.' : md ? '주요 행동 완료. 자유행동을 더 하거나, 되돌리거나, 행동을 확정하세요.' : '행동 칸 사용 · 시민 카드 사용 · 뒤집기 능력 · 패스 중 하나 (자유행동은 언제든)'}</div>
     <div class="abar-btns">
-      <button class="btn" data-a="undo" ${n?'':'disabled'}>되돌리기${n?` (${n})`:''}</button>
+      <button class="btn" data-a="undo" ${n?'':'disabled'}>되돌리기</button>
       <button class="btn" data-a="pass" ${md?'disabled':''}>패스</button>
       <button class="btn primary" data-a="endturn" ${md?'':'disabled'}>행동 확정</button>
       <button class="btn ${UI.freeOpen?'on':''}" data-a="freemenu" ${cp.passed?'disabled':''}>자유행동 ${UI.freeOpen?'▴':'▾'}</button>
