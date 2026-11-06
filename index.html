@@ -5430,6 +5430,7 @@ function renderSetup(){
       <div class="rulebox">
       <label class="advopt"><input type="checkbox" id="aibonus" ${SETUP.aiBonus?'checked':''}> AI 난이도 보너스: AI가 패스할 때마다 승점을 더해, 평균 점수가 초급 약 140 · 중급 약 220 · 고급 약 300점이 되게 맞춥니다 (끄면 AI의 실제 실력 그대로)</label>
       <small class="muted">AI 학습: 사람 플레이 기록 ${AI_PROFILE ? Math.round(AI_PROFILE.n * 10) / 10 : 0}판 · 상황별 선택 ${AI_PROFILE && AI_PROFILE.dec ? AI_PROFILE.dec.n : 0}건 · 사례 ${AI_CASES.length}건을 배웠습니다 (게임이 끝날 때마다 사람 1위의 기록을 반영 · 중급·고급 AI에 적용)</small>
+      <small class="muted">놓는 자리 ${AI_PROFILE && AI_PROFILE.plc ? Math.round(AI_PROFILE.plc.n) : 0}건 · <button type="button" class="btn ghost" data-a="aiexport" style="padding:2px 10px;font-size:12px">학습 데이터 내보내기</button></small>
       </div>
       <label class="advopt"><input type="checkbox" id="advsk" ${SETUP.adv?'checked':''}> 변형 규칙: 고급 기술 타일 사용 (인원+1장 공개, 기술 타일을 얻을 때 다이아 1개로 대신 가져가기)</label>
       ${online ? (NET.db ? `${NET.canWrite === false ? '<p class="warnbox">보기 전용 권한이라 방을 만들 수 없습니다. 방을 만든 사람이 이 계정을 "편집 가능" 권한으로 초대해야 합니다.</p>' : ''}<button class="btn primary wide" data-a="ocreate" ${NET.canWrite === false ? 'disabled' : ''}>온라인 게임 만들기</button>` : '') : `<button class="btn primary wide" data-a="start">게임 시작</button>`}
@@ -6329,6 +6330,7 @@ function downloadText(name, text, type){
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 const fileStamp = () => { const d = new Date(), z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`; };
+function saveAiData(){ try { downloadText(`스위트랜드-AI학습데이터-${fileStamp()}.json`, JSON.stringify({app:'sweetland-ai', v:1, at:Date.now(), profile:AI_PROFILE, cases:AI_CASES, pending:aiPendGet(), casesPending:aiCasePendGet()}), 'application/json;charset=utf-8'); toast('AI 학습 데이터를 저장했습니다'); } catch (e) { toast('저장하지 못했습니다'); } }
 function saveLogFile(){ if (!G) return; downloadText(`스위트랜드-기록-${fileStamp()}.txt`, '\ufeff' + logText(), 'text/plain;charset=utf-8'); toast('로그를 저장했습니다'); }
 function saveTurnData(){ if (!G) return; downloadText(`스위트랜드-턴별데이터-${fileStamp()}.json`, JSON.stringify(turnData()), 'application/json;charset=utf-8'); toast('턴별 데이터를 저장했습니다'); }
 const autoNote = () => { const c = AUTO_NOTE && cardOf(AUTO_NOTE); return c && (c.auto || []).length ? `<div class="autonote"><span class="mauto">${ic('auto')} 자동화 보상 ${fxRows(c.auto)}</span></div>` : ''; };
@@ -6488,6 +6490,7 @@ document.addEventListener('click', e => {
     case 'vibtoggle': NOTIFY.vib = !NOTIFY.vib; try { localStorage.setItem('sweetland-vibrate', NOTIFY.vib ? 'on' : 'off'); } catch(e){} if (NOTIFY.vib) buzz(); toast(NOTIFY.vib ? '진동 알림을 켰습니다' : '진동 알림을 꺼습니다'); render(); break;
     case 'notifytoggle': NOTIFY.on = !NOTIFY.on; try { localStorage.setItem('sweetland-notify', NOTIFY.on ? 'on' : 'off'); } catch(e){} if (!NOTIFY.on) stopTitleFlash(); toast(NOTIFY.on ? '내 차례 알림을 켰습니다' : '내 차례 알림을 꺼습니다'); render(); break;
     case 'savelog': saveLogFile(); break;
+    case 'aiexport': saveAiData(); break;
     case 'savejson': saveTurnData(); break;
     case 'resume': G = loadSave(); UI.handoffSeen = null; UI.view = G.cur; UI.busy = false; UI.prompt = null; DRIVING = false; UI.undo = []; render(); setTimeout(drive, 0); break;
     case 'aikick': EPOCH++; DRIVING = false; UI.busy = false; UI.prompt = null; UI.nested = false; toast('AI 진행을 다시 시작합니다'); render(); setTimeout(drive, 0); break;
