@@ -4095,18 +4095,25 @@ function aiCasesSave(){ try { localStorage.setItem(AI_CASE_KEY, JSON.stringify(A
 function aiCasesTrim(a){ if (a.length <= AI_CASE_MAX) return a; const keep = a.map((c, i) => ({c, i})).sort((x, y) => (y.c[6] - x.c[6]) || (y.i - x.i)).slice(0, AI_CASE_MAX).sort((x, y) => x.i - y.i); return keep.map(x => x.c); }
 function aiCasesFrom(decs, sc){ return (decs || []).map(d => [d.r, d.hand, d.gold, d.mat, d.chosen, d.opts.join(','), Math.round(sc)]); }
 function aiCasePendGet(){ try { const x = JSON.parse(localStorage.getItem(AI_CASE_PEND) || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; } }
+let AI_NET_ERR = '';
 async function aiCasesUpload(rows){   // 공용 문서에 '더하기' (실패하면 기기에 보관했다가 다음 접속 때 다시)
   if (!rows.length) return;
   const all = aiCasePendGet().concat(rows);
   try {
-    if (!NET.db || !NET.db.runTransaction) throw new Error('no db');
-    const ref = NET.db.doc('ailearn/cases');
-    const merged = await NET.db.runTransaction(async tx => {
-      const sn = await tx.get(ref); let cur = []; try { cur = sn && sn.exists ? JSON.parse((sn.data() || {}).json || '[]') : []; } catch (e) {}
-      const m = aiCasesTrim((Array.isArray(cur) ? cur : []).concat(all)); tx.set(ref, {json:JSON.stringify(m), n:m.length, at:Date.now()}); return m; });
+    if (!NET.db) throw new Error('no db');
+    const ref = NET.db.doc('ailearn/cases'), pick = sn => { let cur = []; try { cur = sn && sn.exists ? JSON.parse((sn.data() || {}).json || '[]') : []; } catch (e) {} return aiCasesTrim((Array.isArray(cur) ? cur : []).concat(all)); };
+    let merged;
+    try {
+      if (!NET.db.runTransaction) throw new Error('no tx');
+      merged = await NET.db.runTransaction(async tx => { const m = pick(await tx.get(ref)); tx.set(ref, {json:JSON.stringify(m), n:m.length, at:Date.now()}); return m; });
+    } catch (e1) {   // 트랜잭션이 막히면 일반 읽기·쓰기로 다시 시도
+      console.error('AI 사례 트랜잭션 실패', e1);
+      merged = pick(await ref.get()); await ref.set({json:JSON.stringify(merged), n:merged.length, at:Date.now()});
+    }
+    AI_NET_ERR = '';
     try { localStorage.removeItem(AI_CASE_PEND); } catch (e) {}
     AI_CASES = merged; aiCasesSave();
-  } catch (e) { try { localStorage.setItem(AI_CASE_PEND, JSON.stringify(all.slice(-1500))); } catch (e2) {} }
+  } catch (e) { AI_NET_ERR = '사례 저장: ' + ((e && (e.code || e.message)) || e); console.error('AI 사례 저장 실패', e); try { localStorage.setItem(AI_CASE_PEND, JSON.stringify(all.slice(-1500))); } catch (e2) {} }
 }
 async function aiCasesSync(){   // 시작할 때: 보관해 둔 기록을 올리고, 공용 사례를 내려받음
   try {
@@ -5430,7 +5437,7 @@ function renderSetup(){
       <div class="rulebox">
       <label class="advopt"><input type="checkbox" id="aibonus" ${SETUP.aiBonus?'checked':''}> AI 난이도 보너스: AI가 패스할 때마다 승점을 더해, 평균 점수가 초급 약 140 · 중급 약 220 · 고급 약 300점이 되게 맞춥니다 (끄면 AI의 실제 실력 그대로)</label>
       <small class="muted">AI 학습: 사람 플레이 기록 ${AI_PROFILE ? Math.round(AI_PROFILE.n * 10) / 10 : 0}판 · 상황별 선택 ${AI_PROFILE && AI_PROFILE.dec ? AI_PROFILE.dec.n : 0}건 · 사례 ${AI_CASES.length}건을 배웠습니다 (게임이 끝날 때마다 사람 1위의 기록을 반영 · 중급·고급 AI에 적용)</small>
-      <small class="muted">놓는 자리 ${AI_PROFILE && AI_PROFILE.plc ? Math.round(AI_PROFILE.plc.n) : 0}건 · <button type="button" class="btn ghost" data-a="aiexport" style="padding:2px 10px;font-size:12px">학습 데이터 내보내기</button></small>
+      <small class="muted">놓는 자리 ${AI_PROFILE && AI_PROFILE.plc ? Math.round(AI_PROFILE.plc.n) : 0}건 · <button type="button" class="btn ghost" data-a="aiexport" style="padding:2px 10px;font-size:12px">학습 데이터 내보내기</button> <button type="button" class="btn ghost" data-a="aiimport" style="padding:2px 10px;font-size:12px">불러오기</button><input type="file" id="aiimpfile" accept=".json,application/json" hidden>${AI_NET_ERR ? `<br><span style="color:#c0392b">⚠ 서버 저장 오류 — ${esc(AI_NET_ERR)}</span>` : ''}</small>
       </div>
       <label class="advopt"><input type="checkbox" id="advsk" ${SETUP.adv?'checked':''}> 변형 규칙: 고급 기술 타일 사용 (인원+1장 공개, 기술 타일을 얻을 때 다이아 1개로 대신 가져가기)</label>
       ${online ? (NET.db ? `${NET.canWrite === false ? '<p class="warnbox">보기 전용 권한이라 방을 만들 수 없습니다. 방을 만든 사람이 이 계정을 "편집 가능" 권한으로 초대해야 합니다.</p>' : ''}<button class="btn primary wide" data-a="ocreate" ${NET.canWrite === false ? 'disabled' : ''}>온라인 게임 만들기</button>` : '') : `<button class="btn primary wide" data-a="start">게임 시작</button>`}
@@ -6327,6 +6334,39 @@ function downloadText(name, text, type){
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 const fileStamp = () => { const d = new Date(), z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`; };
+// 학습 데이터 불러오기: 파일과 이 기기의 기록을 항목별로 '더 많이 배운 쪽'으로 합침 (같은 파일을 여러 번 불러와도 두 번 더해지지 않음)
+function aiPickMerge(loc, f){
+  const n = x => (x && x.n) || 0;
+  const out = clone(n(f) > n(loc) ? f : loc);
+  for (const k of ['dec', 'plc']) { const a = loc && loc[k], b = f && f[k]; if (n(b) > n(a)) out[k] = clone(b); else if (a) out[k] = clone(a); }
+  out.bands = {}; const bl = (loc && loc.bands) || {}, bf = (f && f.bands) || {};
+  for (const k of new Set([...Object.keys(bl), ...Object.keys(bf)])) { const a = bl[k], b = bf[k]; out.bands[k] = clone(!a ? b : !b ? a : (b.n > a.n ? b : a)); }
+  const seen = new Set(), hist = []; for (const h of [...((loc && loc.hist) || []), ...((f && f.hist) || [])]) { if (seen.has(h.t)) continue; seen.add(h.t); hist.push(h); }
+  out.hist = hist.sort((a, b) => a.t - b.t).slice(-200); return out;
+}
+function aiCasesUnion(a, b){   // 같은 기록은 더 많이 가진 쪽 개수만큼만 (겹치는 판은 두 번 세지 않음)
+  const cnt = m => { const o = {}; for (const c of m) { const k = JSON.stringify(c); o[k] = (o[k] || 0) + 1; } return o; };
+  const ca = cnt(a), cb = cnt(b), out = [];
+  for (const k of new Set([...Object.keys(ca), ...Object.keys(cb)])) for (let i = 0, m = Math.max(ca[k] || 0, cb[k] || 0); i < m; i++) out.push(JSON.parse(k));
+  return aiCasesTrim(out);
+}
+async function aiImportData(file){
+  try {
+    const D = JSON.parse(await file.text());
+    if (!D || D.app !== 'sweetland-ai' || !aiProfileValid(D.profile)) { alert('스위트랜드 AI 학습 데이터 파일이 아닙니다.'); return; }
+    AI_PROFILE = aiPickMerge(AI_PROFILE, D.profile); aiProfileSaveLocal(); aiProfileApply();
+    AI_CASES = aiCasesUnion(AI_CASES, Array.isArray(D.cases) ? D.cases : []); aiCasesSave();
+    let up = '이 기기에만 저장했습니다.';
+    if (NET.db) { try {
+      const ref = NET.db.doc('ailearn/profile'), sn = await ref.get(); let cloud = null; try { cloud = sn && sn.exists ? JSON.parse((sn.data() || {}).json || 'null') : null; } catch (e) {}
+      const m = aiProfileValid(cloud) ? aiPickMerge(cloud, AI_PROFILE) : AI_PROFILE; await ref.set({json:JSON.stringify(m), n:m.n, at:Date.now()}); AI_PROFILE = m; aiProfileSaveLocal(); aiProfileApply();
+      const cr = NET.db.doc('ailearn/cases'), cs = await cr.get(); let cc = []; try { cc = cs && cs.exists ? JSON.parse((cs.data() || {}).json || '[]') : []; } catch (e) {}
+      const mc = aiCasesUnion(Array.isArray(cc) ? cc : [], AI_CASES); await cr.set({json:JSON.stringify(mc), n:mc.length, at:Date.now()}); AI_CASES = mc; aiCasesSave();
+      up = '온라인 공용 데이터에도 합쳐 올렸습니다.'; } catch (e) { console.error(e); AI_NET_ERR = '불러오기: ' + ((e && (e.code || e.message)) || e); up = '온라인에는 올리지 못했습니다(이 기기에만 저장). 원인: ' + AI_NET_ERR; } }
+    alert(`불러오기 완료 — 누적 ${Math.round(AI_PROFILE.n * 10) / 10}판 · 상황별 선택 ${Math.round((AI_PROFILE.dec && AI_PROFILE.dec.n) || 0)}건 · 놓는 자리 ${Math.round((AI_PROFILE.plc && AI_PROFILE.plc.n) || 0)}건 · 사례 ${AI_CASES.length}건\n${up}`);
+    render();
+  } catch (e) { alert('파일을 읽지 못했습니다.'); }
+}
 function saveAiData(){ try { downloadText(`스위트랜드-AI학습데이터-${fileStamp()}.json`, JSON.stringify({app:'sweetland-ai', v:1, at:Date.now(), profile:AI_PROFILE, cases:AI_CASES, pending:aiPendGet(), casesPending:aiCasePendGet()}), 'application/json;charset=utf-8'); toast('AI 학습 데이터를 저장했습니다'); } catch (e) { toast('저장하지 못했습니다'); } }
 function saveLogFile(){ if (!G) return; downloadText(`스위트랜드-기록-${fileStamp()}.txt`, '\ufeff' + logText(), 'text/plain;charset=utf-8'); toast('로그를 저장했습니다'); }
 function saveTurnData(){ if (!G) return; downloadText(`스위트랜드-턴별데이터-${fileStamp()}.json`, JSON.stringify(turnData()), 'application/json;charset=utf-8'); toast('턴별 데이터를 저장했습니다'); }
@@ -6488,6 +6528,7 @@ document.addEventListener('click', e => {
     case 'notifytoggle': NOTIFY.on = !NOTIFY.on; try { localStorage.setItem('sweetland-notify', NOTIFY.on ? 'on' : 'off'); } catch(e){} if (!NOTIFY.on) stopTitleFlash(); toast(NOTIFY.on ? '내 차례 알림을 켰습니다' : '내 차례 알림을 꺼습니다'); render(); break;
     case 'savelog': saveLogFile(); break;
     case 'aiexport': saveAiData(); break;
+    case 'aiimport': { const f = document.getElementById('aiimpfile'); if (f) f.click(); break; }
     case 'savejson': saveTurnData(); break;
     case 'resume': G = loadSave(); UI.handoffSeen = null; UI.view = G.cur; UI.busy = false; UI.prompt = null; DRIVING = false; UI.undo = []; render(); setTimeout(drive, 0); break;
     case 'aikick': EPOCH++; DRIVING = false; UI.busy = false; UI.prompt = null; UI.nested = false; toast('AI 진행을 다시 시작합니다'); render(); setTimeout(drive, 0); break;
@@ -6529,6 +6570,7 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('change', e => {
+  if (e.target.id === 'aiimpfile') { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) aiImportData(f); return; }
   if (e.target.classList.contains('pchar')) { collectNames(); SETUP.players[+e.target.dataset.i].char = e.target.value; renderSetup(); }
   if (e.target.classList.contains('ptype')) { collectNames(); const pl = SETUP.players[+e.target.dataset.i]; pl.type = e.target.value; pl.aiName = ''; renderSetup(); }
   if (e.target.classList.contains('jchar')) SETUP.joinChar = e.target.value;
