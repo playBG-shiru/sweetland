@@ -1225,7 +1225,7 @@ const CITY_POINTS = [0,1,2,3,5,7,9];      // 도시 0~6개 (패스할 때마다)
 
 // 일반 지형 타일 뒷면: 지정된 수입 +1 또는 같은 색 번영 트랙 1칸 (바다: 금 수입 +2)
 function flipEffects(type){
-  if (type === 'sea') return [{t:'income', r:{gold:2}}];
+  if (type === 'sea') return [{t:'income', r:{gold:(typeof balOn === 'function' && balOn('sea3')) ? 3 : 2}}];   // 밸런스 패치 sea3: 바다 타일 뒤집기 금 수입 +3
   const r = {wheat:'wheat', forest:'wood', mine:'iron'}[type];
   return [{t:'pick', opts:[[{t:'income', r:{[r]:1}}], [{t:'prosp', n:1, color:TILE_COLOR[type]}]]}];
 }
@@ -1374,7 +1374,7 @@ const ADV_SKILLS = [
   {id:103, kind:'pass', name:'스위트 수집가', text:'패스: 가장 많은 스위트 태그 1개당 2점'},
   {id:104, kind:'flip', name:'제철소', text:'철 4 → 산업 트랙 최대 3칸', cost:{iron:4}, eff:[{t:'ind',n:3}]},
   {id:105, kind:'flip', name:'곡창', text:'밀 4 → 음식 1칸 그리고/또는 토끼 쿠키 1개', cost:{wheat:4}, eff:[{t:'food',n:1},{t:'rabbit',n:1}]},
-  {id:106, kind:'flip', name:'투자', text:'금 수입 +5', eff:[{t:'income',r:{gold:5}}]},
+  {id:106, kind:'flip', name:'투자', get text(){ return balOn('invest') ? '금 수입 +5 · 금 3' : '금 수입 +5'; }, get eff(){ return balOn('invest') ? [{t:'income',r:{gold:5}}, {t:'gain',r:{gold:3}}] : [{t:'income',r:{gold:5}}]; }},   // 밸런스 패치 invest: 금 3 추가
   {id:107, kind:'flip', name:'개척단', text:'지형 1개 + 도로 1개', eff:[{t:'terrainRoad',n:1}]},
   {id:108, kind:'flip', name:'인재 발굴', text:'카드 2장 뽑고 1장 버리기', eff:[{t:'draw',n:2},{t:'discard',n:1}]},
   {id:109, kind:'perm', name:'재테크', text:'금 수입이 오를 때마다 오른 만큼 승점'},
@@ -1584,8 +1584,8 @@ const CARD_DB = [
    now:[{t:'trade', pay:{diamond:1}, effs:[{t:'terrain', n:2}]}, {t:'ifTags', req:{shortcake:2, tiramisu:2}, effs:[{t:'terrain', n:2}]}], auto:[{t:'terrain', n:1}],
    text:'다이아 1 지불 → 지형 타일 2 / 쇼트케이크 태그 2개 + 티라미수 태그 2개면 지형 타일 2 / 자동화: 지형 타일 1'},
   {id:'c-ema', name:'에마 미깡', count:1, kind:'immediate', cost:{gold:11}, tags:['wagashi'], industry:'green',
-   now:[{t:'trade', payInc:{gold:3}, effs:[{t:'city', n:1}]}], auto:[{t:'city', n:1}],
-   text:'금 수입 3 지불 → 도시 점수 1 / 자동화: 도시 점수 1'},
+   get now(){ return [{t:'trade', payInc:{gold:balOn('ema2') ? 2 : 3}, effs:[{t:'city', n:1}]}]; }, auto:[{t:'city', n:1}],   // 밸런스 패치 ema2: 금 수입 3 → 2 지불
+   get text(){ return `금 수입 ${balOn('ema2') ? 2 : 3} 지불 → 도시 점수 1 / 자동화: 도시 점수 1`; }},
   {id:'c-penny', name:'페니 퍼프', count:1, kind:'immediate', cost:{gold:6}, discTag:'brownie', tags:['brownie'], industry:'orange',
    now:[{t:'perCount', src:{k:'rabbits'}, per:1, income:{gold:1}}], auto:[{t:'income', r:{gold:1}}],
    text:'배치된 토끼 쿠키 1개당 금 수입 +1 / 자동화: 금 수입 +1'},
@@ -2380,7 +2380,7 @@ function newGame(cfg, opts){
     areas[k] = Array(a.spaces).fill(null);
   }
   G = {
-    mode:'local', code:null, flow:null, handMode:(opts && opts.handMode) || 'reroll', aiBonus:!(opts && opts.aiBonus === false), hd:null, handDrafted:false,
+    mode:'local', code:null, flow:null, handMode:(opts && opts.handMode) || 'reroll', aiBonus:!(opts && opts.aiBonus === false), patches:Object.fromEntries(Object.entries((opts && opts.patches) || {}).filter(([k, v]) => v)), hd:null, handDrafted:false,
     round:1, phase:'setup', start:0, nextStart:null, cur:0, turn:{mainDone:false},
     areas, aid, deck, discard:[],
     skillStacks:Object.fromEntries(SKILLS.map(s => [s.id, 3])),
@@ -2413,6 +2413,7 @@ function newGame(cfg, opts){
 // 각 단계는 '지금 차례인 플레이어(G.cur)'를 조종하는 쪽(사람 / AI / 온라인 접속자)이 한 걸음씩 진행한다.
 function beginSetupAid(){
   const n = G.players.length;
+  if (balList(G.patches).length) log(`⚖ 밸런스 패치 적용(비공식): ${balList(G.patches).join(', ')}`);
   G.phase = 'setup-aid';
   G.flow = {order:Array.from({length:n}, (_,j) => (n - 1 - j + n) % n), idx:0};  // 시작 플레이어 오른쪽부터 반시계
   G.cur = G.flow.order[0];
@@ -2613,8 +2614,19 @@ function restoreInPlace(t, src){
   for (const [k, v] of Object.entries(src)) { if (v && typeof v === 'object' && t[k] && typeof t[k] === 'object' && Array.isArray(v) === Array.isArray(t[k])) restoreInPlace(t[k], v); else t[k] = v; }
 }
 // ---------- 프롬프트 ----------
-function ask(pr){ return new Promise((res, rej) => {
-  UI.prompt = {...pr, res, rej, noCancel: !!pr.noCancel, inFree: !!(UI.nested || UI.inFree)}; UI.sel = []; UI.alloc = null; UI.cnt = null; UI.promptFold = false;
+// 행동 도중 한 단계 되돌리기: 사람이 답한 선택을 순서대로 기록해 두고, 되돌리면 행동 시작 상태에서 마지막 선택 전까지 다시 재생함
+let ACT_ANS = [], REPLAY = null, REWIND_TO = null, ACT_SNAP = null, ACT_CBASE = null;   // ACT_CBASE: 행동 취소 때 돌아갈 상태 (행동 도중 끝낸 자유행동은 남겨 둠)
+const REWIND = {rewind:true};
+function ask(pr){ return new Promise((res0, rej) => {
+  const human = !isAI(G.cur) && !UI.nested && UI.busy;
+  if (REPLAY && REPLAY.length && human) {
+    const r = REPLAY[0];
+    if (r.type === pr.type) { REPLAY.shift(); ACT_ANS.push(r); res0(r.v); return; }
+    REPLAY = null;
+  }
+  let cur = null;
+  const res = v => { if (human && cur) ACT_ANS.push({type:pr.type, v, plc:cur.plc0 != null ? cur.plc0 : PLC_LOG.rows.length}); res0(v); };
+  cur = UI.prompt = {...pr, res, rej, noCancel: !!pr.noCancel, inFree: !!(UI.nested || UI.inFree)}; UI.sel = []; UI.alloc = null; UI.cnt = null; UI.promptFold = false;
   if (isAI(G.cur)) {
     UI.prompt.ai = true; render();
     const mine = UI.prompt;
@@ -2624,7 +2636,15 @@ function ask(pr){ return new Promise((res, rej) => {
   if (G.mode !== 'online' || controls(G.cur)) UI.view = G.cur;
   render();
 }); }
-function answer(v){ const pr = UI.prompt; UI.prompt = null; plcRecord(pr, v); pr.res(v); }
+function answer(v){ const pr = UI.prompt; UI.prompt = null; pr.plc0 = PLC_LOG.rows.length; plcRecord(pr, v); pr.res(v); }
+const canStepBack = () => !!(UI.busy && UI.prompt && !UI.prompt.ai && !UI.nested && ACT_ANS.length && ACT_SNAP && ACT && !ACT.drew && !ACT.noStep && G.phase === 'action');
+function stepBack(){
+  if (!canStepBack()) return;
+  const pr = UI.prompt; UI.prompt = null;
+  const last = ACT_ANS.pop(); if (PLC_LOG.rows.length > last.plc) PLC_LOG.rows.length = last.plc;
+  REWIND_TO = ACT_ANS.slice();
+  pr.rej(REWIND);
+}
 function cancelPrompt(){ const pr = UI.prompt; if (!pr || pr.noCancel || G.phase !== 'action') return; UI.prompt = null; pr.rej(CANCEL); }
 async function choose(text, options, extra={}){ return ask({type:'choice', text, options, ...extra}); }
 
@@ -2632,15 +2652,22 @@ async function runAction(fn, isMain){
   if (UI.busy) return;
   UI.busy = true;
   const snap = clone(G);
-  let changed = false; const info = ACT_INFO; ACT_INFO = null; const pi0 = G.cur, before = snapP(P(pi0), pi0); G._pl = [];
-  ACT = {flipped:new Set(), ibQueue:[], ibBusy:false};
-  try {
-    const ok = await fn();
-    if (ok !== false) { if (isMain) G.turn.mainDone = true; UI.undo = (ACT && ACT.drew) ? [] : [snap]; changed = true; /* 되돌리기는 바로 이전 행동 하나만, 카드를 받았으면 불가 */ tlogPush(info, pi0, before, !!isMain); }
-  } catch (e) {
-    if (e === CANCEL) { G = snap; log('행동을 취소했습니다'); }
-    else { console.error(e); G = snap; toast('오류: ' + e.message); }
+  let changed = false; const info = ACT_INFO; ACT_INFO = null; const pi0 = G.cur, before = snapP(P(pi0), pi0);
+  ACT_SNAP = snap; ACT_CBASE = snap; ACT_ANS = []; REPLAY = null; REWIND_TO = null;
+  let replay = null;
+  for (;;) {
+    G._pl = []; ACT = {flipped:new Set(), ibQueue:[], ibBusy:false}; ACT_ANS = []; REPLAY = replay;
+    try {
+      const ok = await fn();
+      if (ok !== false) { if (isMain) G.turn.mainDone = true; UI.undo = (ACT && ACT.drew) ? [] : [snap]; changed = true; /* 되돌리기는 바로 이전 행동 하나만, 카드를 받았으면 불가 */ tlogPush(info, pi0, before, !!isMain); }
+    } catch (e) {
+      if (e === REWIND) { restoreInPlace(G, clone(snap)); replay = REWIND_TO; REWIND_TO = null; UI.prompt = null; log('한 단계 되돌렸습니다'); continue; }
+      if (e === CANCEL) { const kept = ACT_CBASE && ACT_CBASE !== snap; G = kept ? ACT_CBASE : snap; log('행동을 취소했습니다'); if (kept) { changed = true; UI.undo = (ACT && ACT.drew) ? [] : [snap]; } }
+      else { console.error(e); G = snap; toast('오류: ' + e.message); }
+    }
+    break;
   }
+  REPLAY = null; ACT_ANS = []; ACT_SNAP = null; ACT_CBASE = null;
   UI.prompt = null; UI.busy = false;
   if (G.mode !== 'online' || controls(G.cur)) UI.view = G.cur;
   PLAYING_SHOW = null; if (changed) { save(); netPush(); }
@@ -3399,10 +3426,10 @@ function freeAction(pi, key){ ACT_INFO = {kind:'free', key};
   if (!FREE[key].ok(p)) return toast('조건이 맞지 않습니다');
   // 다른 행동을 하는 도중(선택 대기 중)에도 자유행동 가능: 대기 중인 선택을 잠시 보관했다가 되돌려 놓음
   if (UI.busy && UI.prompt && !UI.nested) {
-    const saved = UI.prompt; UI.prompt = null; UI.nested = true;
+    const saved = UI.prompt; UI.prompt = null; UI.nested = true; if (ACT) ACT.noStep = true;
     log(`${p.name}: (행동 중) 자유행동 — ${FREE[key].label}`);
     const snap = clone(G);
-    freeCore(pi, key).catch(e => {
+    freeCore(pi, key).then(() => { if (!ACT_ANS.length && ACT_CBASE) ACT_CBASE = clone(G); /* 아직 고른 게 없으면 끝낸 자유행동은 취소해도 남김 */ }).catch(e => {
       if (e === CANCEL) { restoreInPlace(G, snap); log(`${p.name}: 자유행동을 취소했습니다`); UI.freeOpen = true; }
       else console.error(e);
     }).finally(() => { UI.nested = false; UI.prompt = saved; UI.sel = []; render(); });
@@ -3731,7 +3758,7 @@ function resVal(p, r){
 const AIW = {};
 // vpBonus: 패스할 때마다 AI에게 주는 승점 (인원별) — 평균 점수가 초급≈140 · 중급≈220 · 고급≈300이 되도록 시뮬레이션으로 맞춤
 const AIP = {bonus:{}, vpBonus:{beginner:{2:30, 3:31, 4:31}, mid:{2:30, 3:33, 4:35}, adv:{2:43, 3:44, 4:45}}, portW:{mid:12, adv:20}, portDist:{mid:1.2, adv:2}, handPen:{adv:0.5}, th:{adv:0.8, mid:0.3}, cardBonus:0, autoVal:0, clock:1, charFree:1, portLv:{mid:1, adv:1},
-  strat:{mid:1, adv:1}, dz:{tile:6, road:8, dist:2.5}, clockW:3, wonderFood:0, clockCard:2, incW:1.5, goalW:5, reserve:1, nonGoalMul:0.5, prospOverride:1, clockProp:6, incPickRound:2, incPickW:1, wonderCross:4.5,
+  strat:{mid:1, adv:1}, dz:{tile:6, road:8, dist:6, route:16}, clockW:3, wonderFood:0, clockCard:2, incW:1.5, goalW:5, reserve:1, nonGoalMul:0.5, prospOverride:1, clockProp:6, incPickRound:2, incPickW:1, wonderCross:4.5,
   uv:{tile:3, road:3, food:3, ind:2.5, inc:2.5}, openBonus:0, learnW:1.5, decW:2.5, cardK:5.5, plcW:3.2, caseW:4, incPlanW:2, passCardK:0.8};   // uv: 사용자 가치표 (땅·다리·빵 3 / 산업 2.5 / 자원 수입 2.5) — 고급 AI만 사용
 const uvCur = () => (G && P(G.cur) && P(G.cur).ai) ? AIP.uv : null;   // 가치표는 모든 등급 공통 (등급 차이는 무작위·학습 반영 비중)
 // INC_ROUND: 라운드별 수입 가치 가중 — 사람 기록(4라운드 기본 자원 수입 31 vs AI 11~17)을 보고 1~3라운드 수입을 더 높게 침
@@ -4045,7 +4072,19 @@ const AI_PROFILE_SEED = {"v":1,"n":3,"plan":{"tiles":[3.67,8.67,14.0,18.33,29.33
 let AI_PROFILE = null;
 function aiProfileValid(x){ return x && x.v === 1 && x.n > 0 && x.plan && Array.isArray(x.area); }
 function aiProfileLoad(){ try { const x = JSON.parse(localStorage.getItem(AI_PROFILE_KEY) || 'null'); AI_PROFILE = aiProfileValid(x) ? x : clone(AI_PROFILE_SEED); } catch(e){ AI_PROFILE = clone(AI_PROFILE_SEED); } aiProfileApply(); }
-function aiProfileSaveLocal(){ try { localStorage.setItem(AI_PROFILE_KEY, JSON.stringify(AI_PROFILE)); } catch(e){} }
+// 내 기기에는 '가장 많이 배운 기록'을 따로 하나 더 보관: 어떤 이유로 줄어든 기록이 들어와도 항목별로 더 큰 쪽을 다시 합쳐 절대 줄어들지 않게 함
+const AI_PROFILE_BK = 'sweetland-ai-profile-best-v1';
+function aiProfileSaveLocal(){
+  try { const b = JSON.parse(localStorage.getItem(AI_PROFILE_BK) || 'null'); if (aiProfileValid(b) && aiProfileValid(AI_PROFILE)) AI_PROFILE = aiPickMerge(AI_PROFILE, b); } catch(e){}
+  try { localStorage.setItem(AI_PROFILE_KEY, JSON.stringify(AI_PROFILE)); localStorage.setItem(AI_PROFILE_BK, JSON.stringify(AI_PROFILE)); } catch(e){}
+}
+// 공용 문서에 쓸 내용: 상황별·자리 학습 건수를 별도 칸으로도 적어 둠 (규칙에서 '줄어드는 쓰기'를 막는 데 사용). 규칙이 아직 이전 버전이면 자동으로 예전 방식으로 씀
+let AI_NOEXTRA = false; try { AI_NOEXTRA = localStorage.getItem('sweetland-ai-noextra') === '1'; } catch (e) {}
+const aiProfDoc = m => { const d = {json:JSON.stringify(m), n:m.n, at:Date.now()}; if (!AI_NOEXTRA) { d.decN = (m.dec && m.dec.n) || 0; d.plcN = (m.plc && m.plc.n) || 0; } return d; };
+async function aiCloudTry(fn){
+  try { return await fn(); }
+  catch (e) { if (!AI_NOEXTRA && /permission|PERMISSION/.test((e && (e.code || e.message)) || '')) { AI_NOEXTRA = true; try { localStorage.setItem('sweetland-ai-noextra', '1'); } catch (e2) {} return await fn(); } throw e; }
+}
 const aiLearnW = () => AI_PROFILE ? Math.min(AI_PROFILE.n, 30) / (Math.min(AI_PROFILE.n, 30) + 3) : 0;   // 판 수가 쌓일수록 프로필 비중↑ (1판 25% · 10판 77% · 30판 91%)
 function aiProfileApply(){
   const w = aiLearnW();
@@ -4120,7 +4159,11 @@ async function aiCasesSync(){   // 시작할 때: 보관해 둔 기록을 올리
     if (!NET.db) return;
     const pend = aiCasePendGet(); if (pend.length) { try { localStorage.removeItem(AI_CASE_PEND); } catch (e) {} await aiCasesUpload(pend); return; }
     const sn = await NET.db.doc('ailearn/cases').get(); let cur = []; try { cur = sn && sn.exists ? JSON.parse((sn.data() || {}).json || '[]') : []; } catch (e) {}
-    if (Array.isArray(cur) && cur.length >= AI_CASES.length) { AI_CASES = cur; aiCasesSave(); if (!G) render(); }
+    if (Array.isArray(cur)) {
+      const u = aiCasesUnion(cur, AI_CASES);   // 서로 가진 사례를 합침 (한쪽이 적다고 다른 쪽을 지우지 않음)
+      if (u.length > cur.length) { try { await NET.db.doc('ailearn/cases').set({json:JSON.stringify(u), n:u.length, at:Date.now()}); } catch (e) { console.error('사례 올리기 실패', e); } }
+      if (u.length !== AI_CASES.length) { AI_CASES = u; aiCasesSave(); if (!G) render(); }
+    }
   } catch (e) { console.error('AI 사례 불러오기 실패', e); }
 }
 function caseBias(p, id){
@@ -4285,12 +4328,14 @@ function aiPendPush(up){ try { const a = aiPendGet().concat(up).slice(-12); loca
 async function aiLearnOnEnd(){
   if (!G || G.phase !== 'end' || G.learned) return;
   G.learned = true;
+  if (G.patches && Object.keys(G.patches).length) return;   // 밸런스 패치 게임은 정식 룰이 아니므로 AI 학습에 반영하지 않음
   const humans = G.players.map((p, i) => ({p, i, s:score(p, i).total})).filter(x => !x.p.ai);
   if (!humans.length || !AI_PROFILE) return;
   humans.forEach(h => pstatsUpdate(h.p.name, h.s));
   const batch = humans.map(h => ({h, w:learnWeight(h.s), sample:learnSample(h.i), decs:(G.decs || []).filter(d => d.seat === h.i), plcs:(PLC_LOG.gk === plcGK() ? PLC_LOG.rows : []).filter(d => d.seat === h.i)})).filter(b => b.sample || b.decs.length || b.plcs.length);
   if (!batch.length) return;
   const apply = base => { let pr = base; for (const b of batch) pr = aiLearnApply(pr, b); return pr; };
+  const preProfile = clone(AI_PROFILE);   // 이번 판을 더하기 전의 내 기록 (공용 기록이 더 빈약할 때 되살리는 데 씀)
   AI_PROFILE = apply(AI_PROFILE); aiProfileSaveLocal(); aiProfileApply();
   log(`AI 학습: 사람 ${batch.length}명의 기록을 점수에 따라 비중을 달리해 반영 (누적 ${Math.round(AI_PROFILE.n * 10) / 10}판 · 상황별 선택 ${Math.round((AI_PROFILE.dec && AI_PROFILE.dec.n) || 0)}건 · 놓는 자리 ${Math.round((AI_PROFILE.plc && AI_PROFILE.plc.n) || 0)}건)`);
   PLC_LOG = {gk:'', rows:[]};
@@ -4305,14 +4350,25 @@ async function aiLearnOnEnd(){
     const ref = NET.db.doc('ailearn/profile');
     const mergeCloud = snap => {
       let cloud = null; try { cloud = snap && snap.exists ? JSON.parse((snap.data() || {}).json || 'null') : null; } catch(e){}
-      return aiProfileValid(cloud) ? apply2(cloud) : (host ? AI_PROFILE : apply2(clone(AI_PROFILE_SEED)));
+      return aiProfileValid(cloud) ? apply2(aiPickMerge(cloud, preProfile)) : (host ? AI_PROFILE : apply2(clone(AI_PROFILE_SEED)));   // 공용 기록의 상황별·자리 학습이 내 기록보다 적으면 내 기록으로 되살린 뒤 이번 판을 더함
     };
     let merged;
     if (NET.db.runTransaction) {   // 트랜잭션: 여러 명이 동시에 올려도 서로 덮어쓰지 않고 차례로 합침
-      merged = await NET.db.runTransaction(async tx => { const m = mergeCloud(await tx.get(ref)); tx.set(ref, {json:JSON.stringify(m), n:m.n, at:Date.now()}); return m; });
-    } else { merged = mergeCloud(await ref.get()); await ref.set({json:JSON.stringify(merged), n:merged.n, at:Date.now()}); }
-    if (merged !== AI_PROFILE && (merged.n > AI_PROFILE.n || (merged.dec && merged.dec.n > ((AI_PROFILE.dec && AI_PROFILE.dec.n) || 0)) || (merged.plc && merged.plc.n > ((AI_PROFILE.plc && AI_PROFILE.plc.n) || 0)))) { AI_PROFILE = merged; aiProfileSaveLocal(); aiProfileApply(); }
+      merged = await aiCloudTry(() => NET.db.runTransaction(async tx => { const m = mergeCloud(await tx.get(ref)); tx.set(ref, aiProfDoc(m)); return m; }));
+    } else { merged = mergeCloud(await ref.get()); await aiCloudTry(() => ref.set(aiProfDoc(merged))); }
+    if (merged !== AI_PROFILE) { AI_PROFILE = aiPickMerge(AI_PROFILE, merged); aiProfileSaveLocal(); aiProfileApply(); }   // 항목별로 더 많이 배운 쪽을 남김 (공용 기록으로 통째로 덮어쓰지 않음)
   } catch(e){ console.error('AI 학습 저장 실패', e); aiPendPush(up); }
+}
+async function aiHealCloud(){   // 공용 기록이 내 기기 기록보다 항목별로 적으면 내 기록으로 채워 둠 (줄어드는 일이 없게)
+  try {
+    if (!NET.db || !aiProfileValid(AI_PROFILE)) return;
+    const ref = NET.db.doc('ailearn/profile');
+    await aiCloudTry(async () => {
+      const sn = await ref.get(); let cloud = null; try { cloud = sn && sn.exists ? JSON.parse((sn.data() || {}).json || 'null') : null; } catch (e) {}
+      const m = aiProfileValid(cloud) ? aiPickMerge(cloud, AI_PROFILE) : AI_PROFILE;
+      if (!aiProfileValid(cloud) || JSON.stringify(m) !== JSON.stringify(cloud)) await ref.set(aiProfDoc(m));
+    });
+  } catch (e) { console.error('AI 공용 기록 보충 실패', e); }
 }
 async function aiProfileSync(){   // 시작할 때 온라인 공용 프로필이 더 많이 배웠으면 그걸 씀
   try {
@@ -4322,12 +4378,12 @@ async function aiProfileSync(){   // 시작할 때 온라인 공용 프로필이
     const pend = aiPendGet();
     if (pend.length && NET.db.runTransaction) {   // 올리지 못한 내 게임 기록: 공용 기록 위에 더해서 올림
       const ref = NET.db.doc('ailearn/profile');
-      const merged = await NET.db.runTransaction(async tx => {
+      const merged = await aiCloudTry(() => NET.db.runTransaction(async tx => {
         const sn = await tx.get(ref); let base = null; try { base = sn && sn.exists ? JSON.parse((sn.data() || {}).json || 'null') : null; } catch (e) {}
         let pr = aiProfileValid(base) ? base : (AI_PROFILE ? clone(AI_PROFILE_SEED) : null); if (!pr) return null;
         for (const b of pend) pr = aiLearnApply(pr, b);
-        tx.set(ref, {json:JSON.stringify(pr), n:pr.n, at:Date.now()}); return pr; });
-      if (merged) { try { localStorage.removeItem(AI_PEND_KEY); } catch (e) {} AI_PROFILE = merged; aiProfileSaveLocal(); aiProfileApply(); if (!G) render(); return; }
+        tx.set(ref, aiProfDoc(pr)); return pr; }));
+      if (merged) { try { localStorage.removeItem(AI_PEND_KEY); } catch (e) {} AI_PROFILE = aiPickMerge(AI_PROFILE, merged); aiProfileSaveLocal(); aiProfileApply(); if (!G) render(); aiHealCloud(); return; }
     }
     if (!aiProfileValid(cloud)) return;
     const dn = x => (x && x.dec && x.dec.n) || 0, pn = x => (x && x.plc && x.plc.n) || 0, loc = AI_PROFILE;
@@ -4338,7 +4394,8 @@ async function aiProfileSync(){   // 시작할 때 온라인 공용 프로필이
     if (pn(loc) > pn(next)) { next.plc = clone(loc.plc); lostCloud = true; } else if (pn(cloud) > pn(next)) { next.plc = clone(cloud.plc); }
     if ((loc ? loc.n : 0) > cloud.n) lostCloud = true;
     if (JSON.stringify(next) !== JSON.stringify(loc)) { AI_PROFILE = next; aiProfileSaveLocal(); aiProfileApply(); if (!G) render(); }
-    if (lostCloud && NET.db) { try { await NET.db.doc('ailearn/profile').set({json:JSON.stringify(next), n:next.n, at:Date.now()}); } catch (e) {} }
+    if (lostCloud && NET.db) { try { await aiCloudTry(() => NET.db.doc('ailearn/profile').set(aiProfDoc(next))); } catch (e) {} }
+    aiHealCloud();
   } catch(e){ console.error('AI 프로필 불러오기 실패', e); }
 }
 function charFit(p, id, a){
@@ -4352,6 +4409,19 @@ function charFit(p, id, a){
 }
 // ===== AI 전략 (1~3라운드: 카드 +1 구역 · 캐릭터 시계탑 해금 · 수입 늘리기 / 4~5라운드: 번영 트랙 2개 끝까지 · 항구 4개) =====
 function stratOn(){ const q = G && P(G.cur); return !!(q && q.ai && AIP.strat[q.ai]); }
+// 카드 추가 구역(D)까지 타일을 이어 가는 길: 아직 열지 못한 D 중 타일 줄이 가장 가까운 곳을 향해 지형을 놓으면 가점
+function dzChain(p){
+  const key = Object.keys(p.tiles).length + ':' + p.drawActive.length + ':' + p.char; if (p._dzc && p._dzc.key === key) return p._dzc.v;
+  let best = null;
+  for (const d of dzTargets(p)) {
+    const goal = d.nb.filter(n => TERRAIN[tch(p, n)]); if (!goal.length) continue;
+    if (goal.some(n => p.tiles[n])) { const r = {d, now:0, goal}; if (!best || r.now < best.now) best = r; continue; }
+    const src = [...CAPITALS, ...Object.keys(p.tiles)];
+    const now = Math.min(...src.flatMap(a => goal.map(g => hexDist(a, g))));
+    if (!best || now < best.now) best = {d, now, goal};
+  }
+  p._dzc = {key, v:best}; return best;
+}
 function dzTargets(p){ return Object.values(HEX).filter(h => h.ch === 'D' && !p.drawActive.includes(h.k)); }
 function clockNeeds(p){   // 시계탑 해금까지 모자란 것
   if (p.clock) return null; const r = (charOf(p) || {}).clock || {}, out = {};
@@ -4426,6 +4496,11 @@ function hexScore(p, k, text){
     if (iconsOf(p, k)) s += effsVal(p, iconsOf(p, k));
     s += h.nb.filter(n => p.tiles[n] || isCap(n)).length * 0.8;
     if (h.edges.some(e => p.roads.includes(e))) s += 4.5;   // 도로 옆에 놓으면 바로 뒤집힘
+    else if (stratOn()) {   // 도로망에서 멀리 떨어진 타일은 뒤집기 어려우니 도로가 닿는 쪽(도로망과 가까운 곳)에 깔기
+      const key = p.roads.join(','); if (!p._rnd || p._rnd.key !== key) p._rnd = {key, d:roadNetDist(p, new Set(p.roads))};
+      const d = Math.min(...h.edges.flatMap(e => [p._rnd.d[EDGE[e].a] ?? 9, p._rnd.d[EDGE[e].b] ?? 9]));
+      s -= 1.6 * Math.min(d, 4) * (1 + Math.min(unflippedN(p), 6) * 0.15);
+    }
     if (PORTS.some(pt => pt.hexes.includes(k))) s += 1.5;
     if (AIP.portLv[P(G.cur).ai]) {
       const before = connectedPorts(p); p.tiles[k] = {type:'x'}; const after = connectedPorts(p); const conn = connectedSet(p).has(k); delete p.tiles[k];
@@ -4447,6 +4522,10 @@ function hexScore(p, k, text){
       }
       const need = clockNeeds(p);
       if (need && need.terr && (need.terr.type === 'any' || TERRAIN[tch(p, k)] === need.terr.type)) s += AIP.clockW * 0.5;
+      if (G.round <= 3) {   // 카드 추가 구역까지 타일을 이어 가기
+        const ch = dzChain(p);
+        if (ch && ch.now > 0) { const dk = Math.min(...ch.goal.map(g => hexDist(k, g))); if (dk < ch.now) s += AIP.dz.dist * (ch.now - dk) * (G.round === 1 ? 1.6 : G.round === 2 ? 1.3 : 1); }
+      }
     }
     return s;
   }
@@ -4488,6 +4567,7 @@ function portEdgeBonus(p, ek){
 //   · 수도·바깥 테두리처럼 지형/카드 구역에 닿지 않는 변은 가치 0
 //   · 당장 쓸모 있는 변이 없으면, 쓸모 있는 변까지 이어지는 '길목'만 거리에 따라 가산
 function roadedHex(p, hk, roads){ return HEX[hk].edges.some(e => roads.has(e)); }
+const unflippedN = p => Object.values(p.tiles).filter(t => !t.flipped).length;
 function edgeDirect(p, ek, roads, vt){
   const e = EDGE[ek]; let s = 0;
   for (const hk of e.hexes) {
@@ -4497,7 +4577,7 @@ function edgeDirect(p, ek, roads, vt){
       if (t && !t.flipped) s += 5;                      // 놓인 타일은 빨리 뒤집기
       else if (!t) s += vt.has(hk) ? 1.2 : 0.3;          // 새로 개척할 타일 자리(뒤집힌 타일 옆은 가점 없음)
     } else if (h.ch === 'D' && !p.drawActive.includes(hk)) {
-      s += h.nb.some(n => p.tiles[n]) ? 3.5 + (stratOn() ? AIP.dz.road : 0) : 1.5;   // 카드 추가 구역 활성화
+      s += h.nb.some(n => p.tiles[n]) ? 3.5 + (stratOn() && !unflippedN(p) ? AIP.dz.road : 0) : 1.5;   // 카드 추가 구역 활성화
     }
   }
   return s;
@@ -4521,7 +4601,7 @@ function edgeScore0(p, ek){
   const roads = new Set(p.roads), vt = validTerrain(p);
   { const e0 = EDGE[ek], cy = (e0.p1[1] + e0.p2[1]) / 2, ch = e0.hexes.find(h => isCap(h)); if (ch && cy > HEX[ch].y + 10) return -60; }   // 수도 맨 아래쪽(맵 아래 가장자리)으로는 도로를 뻗지 않음
   let direct = edgeDirect(p, ek, roads, vt);
-  if (direct > 0 && EDGE[ek].hexes.some(h => isCap(h))) direct = Math.max(0.1, direct * 0.45 - 1);   // 수도 6각형 테두리 도로는 피하고 바깥으로 뻗기
+  if (direct > 0 && EDGE[ek].hexes.some(h => isCap(h)) && !EDGE[ek].hexes.some(h => p.tiles[h] && !p.tiles[h].flipped)) direct = Math.max(0.1, direct * 0.45 - 1);   // 수도 6각형 테두리 도로는 피하고 바깥으로 뻗기
   const rim = EDGE[ek].hexes.length < 2;   // 맵 가장자리(한쪽에만 칸이 있는 변)는 효율이 떨어져 감점
   if (direct > 0) return rim ? direct * 0.85 : direct;
   // 길목 점수: 이 변을 놓으면 쓸모 있는 변(목표)까지 남은 도로 수가 줄어드는가
@@ -4542,10 +4622,23 @@ function edgeScore0(p, ek){
 }
 // 맵 중앙에서 먼 변(맵 바깥쪽 가장자리)일수록 약간 감점: 점수가 비슷하면 안쪽 변을 고르게 함
 let EDGE_CEN = null;
+// 카드 추가 구역(D) 옆에 타일이 이미 있으면, 그 구역의 변까지 도로망을 뻗는 길에 가점
+function dzRoute(p, ek){
+  if (!stratOn() || G.round > 4 || unflippedN(p)) return 0;   // 깔아 둔 타일을 먼저 뒤집은 뒤에 카드 구역으로 뻗기
+  const tg = dzTargets(p).filter(d => d.nb.some(n => p.tiles[n])); if (!tg.length) return 0;
+  const roads = new Set(p.roads), key = p.roads.join(',') + '|' + tg.map(d => d.k).join(',');
+  if (!p._dzr || p._dzr.key !== key) p._dzr = {key, before:roadNetDist(p, roads), tk:tg.flatMap(d => d.edges.filter(e => !roads.has(e) && !BLOCKED_EDGES.has(e)))};
+  const r2 = new Set(roads); r2.add(ek); const after = roadNetDist(p, r2); let best = 0;
+  for (const tk of p._dzr.tk) {
+    const t = EDGE[tk], c0 = Math.min(p._dzr.before[t.a] ?? 99, p._dzr.before[t.b] ?? 99) + 1, c1 = Math.min(after[t.a] ?? 99, after[t.b] ?? 99) + 1;
+    if (c1 < c0 && c1 <= 12) best = Math.max(best, AIP.dz.route * 0.8 / Math.sqrt(c1));
+  }
+  return best;
+}
 function edgeScore(p, ek){
   if (!EDGE_CEN) { const hs = Object.values(HEX); const cx = hs.reduce((t, h) => t + h.x, 0) / hs.length, cy = hs.reduce((t, h) => t + h.y, 0) / hs.length; EDGE_CEN = {cx, cy, max:Math.max(...hs.map(h => Math.hypot(h.x - cx, h.y - cy))) || 1}; }
   const e = EDGE[ek], mx = (e.p1[0] + e.p2[0]) / 2, my = (e.p1[1] + e.p2[1]) / 2;
-  return edgeScore0(p, ek) - 0.8 * Math.hypot(mx - EDGE_CEN.cx, my - EDGE_CEN.cy) / EDGE_CEN.max;
+  return edgeScore0(p, ek) + dzRoute(p, ek) - 0.8 * Math.hypot(mx - EDGE_CEN.cx, my - EDGE_CEN.cy) / EDGE_CEN.max;
 }
 const SKILL_PREF = {beginner:[], mid:[9,8,7,10,1,2,3,11,12,5,4,6], adv:[10,12,1,2,3,9,8,7,11,5,6,4]};
 const PROP_PREF = {tent:3, house:2.6, building:2.4, coffee:2, lab:1.2};
@@ -4950,7 +5043,7 @@ const genCode = () => Array.from({length:5}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ2345
 async function netCreate(seats, opts){
   let code = genCode();
   try { for (let k = 0; k < 5; k++) { const ex = await NET.db.doc('games/' + code).get(); if (!ex.exists) break; code = genCode(); } } catch(e){ console.error(e); }
-  const meta = {code, status:'lobby', n:seats.length, created:Date.now(), host:NET.token, seats, adv:!!(opts && opts.advSkills), turnVariant:!!(opts && opts.turnVariant), handMode:(opts && opts.handMode) || 'reroll', mapMode:(opts && opts.mapMode) || 'free', pick:(opts && opts.pick) || 'free'};
+  const meta = {code, status:'lobby', n:seats.length, created:Date.now(), host:NET.token, seats, adv:!!(opts && opts.advSkills), turnVariant:!!(opts && opts.turnVariant), handMode:(opts && opts.handMode) || 'reroll', mapMode:(opts && opts.mapMode) || 'free', pick:(opts && opts.pick) || 'free', patches:(opts && opts.patches) || {}};
   meta.seats[0].token = NET.token;
   try { await NET.db.doc('games/' + code).set(meta); }
   catch(e){ console.error(e); toast(netErrMsg(e, '온라인 게임을 만들지 못했습니다. 이 링크에 쓰기 권한이 있는지 확인하세요.')); return; }
@@ -5033,7 +5126,7 @@ async function netStart(){
 async function launchOnline(m){
   const ncfg = m.seats.map((s, i) => ({name:s.name || (s.type === 'ai' ? `AI ${AI_LEVELS[s.level]}` : `플레이어 ${i+1}`), char:s.char || CHARACTERS[i % CHARACTERS.length].id, map:s.map || 'A', ai:s.type === 'ai' ? s.level : null, token:s.token}));
   if (m.mapMode === 'randB') { const mm = randBMaps(ncfg.length); ncfg.forEach((c, i) => c.map = mm[i]); }
-  newGame(ncfg, {advSkills:!!m.adv, turnOrder:!!m.turnVariant, handMode:m.handMode || 'reroll'});
+  newGame(ncfg, {advSkills:!!m.adv, turnOrder:!!m.turnVariant, handMode:m.handMode || 'reroll', patches:m.patches || {}});
   G.mode = 'online'; G.code = m.code;
   beginSetupAid();
   const m2 = {...JSON.parse(JSON.stringify(m)), status:'playing', started:Date.now()}; delete m2.draft;
@@ -5373,7 +5466,16 @@ const PASS_AID_HTML = [
 const PHASE = {'hand-draft':'카드 드래프트', 'setup-aid':'게임 준비', income:'수입 단계', action:'행동 단계', cleanup:'정리 단계', end:'게임 종료'};
 
 // ---------- 설정 화면 ----------
-let SETUP = {mode:'local', n:2, adv:false, turnVariant:true, handMode:'reroll', randStart:true, aiBonus:true, pick:'free', mapMode:'free', joinName:'', joinChar:'bastet', joinMap:'A', players:[
+// ===== 밸런스 패치 (비공식 · 자체 규칙) — 게임 시작 때 고르면 G.patches 에 켜진 패치가 담김. 효과는 balOn('패치id') 로 확인 =====
+const BAL_PATCHES = [
+  {id:'sea3', label:'바다 타일 보상 상향', desc:'바다 타일을 뒤집을 때 금 수입 +2 → +3'},
+  {id:'invest', label:'투자 기술 타일 상향', desc:'고급 기술 타일 \'투자\'가 금 수입 +5에 더해 금 3도 받음'},
+  {id:'ema2', label:'에마 미깡 상향', desc:'시민 카드 \'에마 미깡\'의 비용이 금 수입 3 → 2 지불로 줄어듦 (도시 점수 1)'},
+  // {id:'예시', label:'패치 이름', desc:'내용 설명'},
+];
+const balOn = id => !!(G && G.patches && G.patches[id]);
+const balList = pt => BAL_PATCHES.filter(b => pt && pt[b.id]).map(b => b.label);
+let SETUP = {mode:'local', patchMode:false, patches:{}, n:2, adv:false, turnVariant:true, handMode:'reroll', randStart:true, aiBonus:true, pick:'free', mapMode:'free', joinName:'', joinChar:'bastet', joinMap:'A', players:[
   {name:'플레이어 1', char:'elsa', type:'human'},{name:'플레이어 2', char:'bastet', type:'mid'},
   {name:'플레이어 3', char:'solbee', type:'mid'},{name:'플레이어 4', char:'rikka', type:'mid'}]};
 const SEAT_TYPES = [['human','사람'],['beginner','AI 초급'],['mid','AI 중급'],['adv','AI 고급']];
@@ -5440,9 +5542,12 @@ function renderSetup(){
       <small class="muted">놓는 자리 ${AI_PROFILE && AI_PROFILE.plc ? Math.round(AI_PROFILE.plc.n) : 0}건 · <button type="button" class="btn ghost" data-a="aiexport" style="padding:2px 10px;font-size:12px">학습 데이터 내보내기</button> <button type="button" class="btn ghost" data-a="aiimport" style="padding:2px 10px;font-size:12px">불러오기</button><input type="file" id="aiimpfile" accept=".json,application/json" hidden>${AI_NET_ERR ? `<br><span style="color:#c0392b">⚠ 서버 저장 오류 — ${esc(AI_NET_ERR)}</span>` : ''}</small>
       </div>
       <label class="advopt"><input type="checkbox" id="advsk" ${SETUP.adv?'checked':''}> 변형 규칙: 고급 기술 타일 사용 (인원+1장 공개, 기술 타일을 얻을 때 다이아 1개로 대신 가져가기)</label>
+      <label class="advopt"><input type="checkbox" id="patchmode" ${SETUP.patchMode?'checked':''}> 밸런스 패치 모드 (정식 룰이 아닌 자체 조정 — 기록에 표시되고 AI 학습에는 반영되지 않습니다)</label>
+      ${SETUP.patchMode ? (BAL_PATCHES.length ? BAL_PATCHES.map(b => `<label class="advopt sub"><input type="checkbox" class="balp" data-id="${b.id}" ${SETUP.patches[b.id]?'checked':''}> ${esc(b.label)}${b.desc ? ` — <small>${esc(b.desc)}</small>` : ''}</label>`).join('') : '<small class="muted">등록된 패치가 아직 없습니다.</small>') : ''}
       ${online ? (NET.db ? `${NET.canWrite === false ? '<p class="warnbox">보기 전용 권한이라 방을 만들 수 없습니다. 방을 만든 사람이 이 계정을 "편집 가능" 권한으로 초대해야 합니다.</p>' : ''}<button class="btn primary wide" data-a="ocreate" ${NET.canWrite === false ? 'disabled' : ''}>온라인 게임 만들기</button>` : '') : `<button class="btn primary wide" data-a="start">게임 시작</button>`}
     </div>
     <button class="btn ghost wide" data-a="gallery">시민 카드 도감 보기</button>
+    <button class="btn ghost wide" data-a="patchnotes">밸런스 패치 내역 보기</button>
   </div>`;
 }
 const myNick = () => { const u = cloudUser(); return u ? (u.displayName || (u.email || '').split('@')[0]) : ''; };
@@ -5474,7 +5579,7 @@ function renderLobby(){
     <div class="panel">
       ${!m ? '<p class="muted">대기실을 불러오는 중…</p>' : m.status !== 'lobby' ? '<p class="muted">게임을 불러오는 중…</p>' : `
       <h3>대기실 · 코드 <span class="code">${m.code}</span></h3>
-      <p class="muted">캐릭터: <b>${m.pick === 'draft' ? '랜덤 뽑기 (시작 후 꼴등 자리부터 선택)' : '각자 선택'}</b> · 영지: <b>${m.mapMode === 'randB' ? '랜덤 (B면)' : '각자 선택'}</b> · 차례: <b>${m.turnVariant ? '턴 오더 보드(패스 순서)' : '시계 방향'}</b></p>
+      <p class="muted">캐릭터: <b>${m.pick === 'draft' ? '랜덤 뽑기 (시작 후 꼴등 자리부터 선택)' : '각자 선택'}</b> · 영지: <b>${m.mapMode === 'randB' ? '랜덤 (B면)' : '각자 선택'}</b> · 차례: <b>${m.turnVariant ? '턴 오더 보드(패스 순서)' : '시계 방향'}</b>${balList(m.patches).length ? ` · 밸런스 패치: <b>${esc(balList(m.patches).join(', '))}</b>` : ''}</p>
       <div class="invite"><input id="invlink" readonly value="${inviteLink(m.code)}" aria-label="초대 링크"><button class="btn" data-a="copyinv" data-v="${m.code}">링크 복사</button></div>
       <p class="muted">이 링크를 받은 친구는 열면 바로 이 방으로 와서 닉네임을 정하고 입장합니다. (친구 계정은 공유 설정에서 "편집 가능"으로 초대해 두세요)</p>
       <div class="lobbylist">${m.seats.map((s,i) => `<div class="lobbyrow" style="--pc:${COLORS[i]}"><span class="pdot"></span><b>${i+1}번</b><span>${s.type==='ai' ? `AI ${AI_LEVELS[s.level]}` : s.token ? esc(s.name || '참가자') + (s.token===NET.token?' (나)':'') : '<i>참가자를 기다리는 중</i>'}</span><span class="muted">${s.char ? esc(CHARACTERS.find(c=>c.id===s.char).name) : (m.pick === 'draft' ? '캐릭터: 뽑기로 결정' : '')}</span></div>`).join('')}</div>
@@ -5779,6 +5884,7 @@ function actionBar(cp){
       ${body}`}
       <div class="abar-btns">
         ${pr.finish ? `<button class="btn" data-a="finish">${esc(pr.finishLabel || '그만하기')}</button>` : ''}
+        ${canStepBack() ? `<button class="btn" data-a="stepback">↩ 한 단계 되돌리기</button>` : ''}
         ${!pr.noCancel && G.phase==='action' ? `<button class="btn ghost" data-a="cancel">${pr.inFree ? '↩ 자유행동 취소' : '행동 취소'}</button>` : ''}
         ${G.phase==='action' && !UI.nested ? `<button class="btn ${UI.freeOpen?'on':''}" data-a="freemenu">자유행동 ${UI.freeOpen?'▴':'▾'}</button>` : ''}
       </div>
@@ -6136,7 +6242,7 @@ const ADV_TILE = {
   103: {abil:['pass'], body:() => `<span class="tgrid">${TAG_ORDER.map(k => tagIcon(k)).join('')}</span><span class="most">Most</span><span class="times">×</span>${q(2, 'vp')}`},
   104: {abil:['flip'], body:() => grp(q(4, 'iron', 'cost')) + grp(AW('pay'), q(3, 'ind'))},
   105: {abil:['flip'], body:() => grp(q(4, 'wheat', 'cost')) + grp(AW('pay'), q(1, 'food'), q(1, 'rabbit-place'))},
-  106: {abil:['flip'], body:() => q(5, 'inc-gold')},
+  106: {abil:['flip'], body:() => q(5, 'inc-gold') + (balOn('invest') ? q(3, 'gold') : '')},
   107: {abil:['flip'], body:() => hexQ(1) + q(1, 'road')},
   108: {abil:['flip'], body:() => q(2, 'draw') + q(1, 'card', 'cost')},
   109: {abil:['inf'],  body:() => grp(q(1, 'inc-gold')) + grp(AW('cond'), q(1, 'vp'))},
@@ -6149,6 +6255,12 @@ const ADV_TILE = {
 function advTile(id){
   const spec = ADV_TILE[id], s = skillDef(id); if (!spec || !s) return '';
   return `<div class="advtile${id < 100 ? ' basic' : ''}" title="${esc(s.name)}: ${esc(s.text)}"><span class="abil">${spec.abil.map(a => ABIL[a]()).join('')}</span><div class="advbody">${spec.body()}</div>${id > 100 ? `<span class="advgem">${ic('diamond')}</span>` : ''}</div>`;
+}
+function renderPatchNotes(){
+  $app().innerHTML = `<div class="setup"><div class="panel"><h3>밸런스 패치 내역 (${BAL_PATCHES.length}건)</h3>
+    <p class="muted">정식 룰이 아니라 자체적으로 조정한 내용입니다. 새 게임 설정에서 '밸런스 패치 모드'를 켜고 원하는 패치를 골라 적용합니다. 패치를 켠 게임은 AI 학습에 반영되지 않습니다.</p>
+    ${BAL_PATCHES.length ? BAL_PATCHES.map((b, i) => `<div class="panel" style="margin:8px 0"><b>${i + 1}. ${esc(b.label)}</b>${b.desc ? `<p class="muted" style="margin:4px 0 0">${esc(b.desc)}</p>` : ''}</div>`).join('') : '<p class="muted">등록된 패치 내역이 아직 없습니다.</p>'}
+    <button class="btn ghost wide" data-a="gback">설정으로 돌아가기</button></div></div>`;
 }
 function renderGallery(){
   $app().innerHTML = `<div class="setup"><div class="panel"><h3>시민 카드 도감 (${CARD_DB.length}종)</h3>
@@ -6267,6 +6379,10 @@ function mapSVG(p, interactive){
       const src = tile.type === 'special' ? TILE_IMG.special[tile.sp] : (tile.flipped ? TILE_IMG.back[tile.type] : TILE_IMG.front[tile.type]);
       const b = hexBox(h);
       body += `<image href="${src}" x="${b.x-2}" y="${b.y-2}" width="${b.w+4}" height="${b.h+4}" preserveAspectRatio="none" clip-path="url(#cl-${h.k.replace(',','-')})"/>`;
+      if (tile.flipped && tile.type === 'sea' && balOn('sea3')) {   // 밸런스 패치: 바다 타일 뒷면의 '2'를 '3'으로 덧그림
+        const iw = b.w + 4, ih = b.h + 4, ix = b.x - 2, iy = b.y - 2, X = f => ix + iw * f / 180, Y = f => iy + ih * f / 204;
+        body += `<g clip-path="url(#cl-${h.k.replace(',','-')})"><rect x="${X(47)}" y="${Y(97)}" width="${iw * 31 / 180}" height="${ih * 45 / 204}" rx="4" fill="#efd0b8"/><text x="${X(62)}" y="${Y(135)}" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="${ih * 0.235}" fill="#4a2a2a">3</text></g>`;
+      }
       if (!tile.flipped) body += `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${HR*0.62}" class="tile-cap" style="fill:${p.color}" clip-path="url(#cl-${h.k.replace(',','-')})"/>`;
       body += `<polygon points="${pts(h)}" class="tile-edge ${tile.flipped?'flipped':'front'}"/>`;
       if (!tile.flipped) body += `<text x="${h.x}" y="${h.y-HR*0.52}" class="cap-txt">앞면</text>`;
@@ -6324,7 +6440,7 @@ function logText(){
 }
 function turnData(){
   return {version:2, exportedAt:new Date().toISOString(),
-    game:{mode:G.mode, round:G.round, phase:G.phase, finished:G.phase === 'end', aiBonus:!!G.aiBonus, players:G.players.map((p, i) => ({seat:i, name:p.name, char:p.char, charName:charName(p), ai:p.ai || null, map:p.map || 'A'}))},
+    game:{mode:G.mode, round:G.round, phase:G.phase, finished:G.phase === 'end', aiBonus:!!G.aiBonus, patches:Object.keys(G.patches || {}), players:G.players.map((p, i) => ({seat:i, name:p.name, char:p.char, charName:charName(p), ai:p.ai || null, map:p.map || 'A'}))},
     final:G.players.map((p, i) => { let s = null; try { s = score(p, i); } catch(e){} return {seat:i, name:p.name, state:snapP(p, i), score:s}; }),
     turns:G.tlog || [], decisions:G.decs || [], log:logLines()};
 }
@@ -6359,7 +6475,7 @@ async function aiImportData(file){
     let up = '이 기기에만 저장했습니다.';
     if (NET.db) { try {
       const ref = NET.db.doc('ailearn/profile'), sn = await ref.get(); let cloud = null; try { cloud = sn && sn.exists ? JSON.parse((sn.data() || {}).json || 'null') : null; } catch (e) {}
-      const m = aiProfileValid(cloud) ? aiPickMerge(cloud, AI_PROFILE) : AI_PROFILE; await ref.set({json:JSON.stringify(m), n:m.n, at:Date.now()}); AI_PROFILE = m; aiProfileSaveLocal(); aiProfileApply();
+      const m = aiProfileValid(cloud) ? aiPickMerge(cloud, AI_PROFILE) : AI_PROFILE; await aiCloudTry(() => ref.set(aiProfDoc(m))); AI_PROFILE = aiPickMerge(AI_PROFILE, m); aiProfileSaveLocal(); aiProfileApply();
       const cr = NET.db.doc('ailearn/cases'), cs = await cr.get(); let cc = []; try { cc = cs && cs.exists ? JSON.parse((cs.data() || {}).json || '[]') : []; } catch (e) {}
       const mc = aiCasesUnion(Array.isArray(cc) ? cc : [], AI_CASES); await cr.set({json:JSON.stringify(mc), n:mc.length, at:Date.now()}); AI_CASES = mc; aiCasesSave();
       up = '온라인 공용 데이터에도 합쳐 올렸습니다.'; } catch (e) { console.error(e); AI_NET_ERR = '불러오기: ' + ((e && (e.code || e.message)) || e); up = '온라인에는 올리지 못했습니다(이 기기에만 저장). 원인: ' + AI_NET_ERR; } }
@@ -6414,6 +6530,7 @@ document.addEventListener('click', e => {
     case 'mode': collectNames(); SETUP.mode = v; renderSetup(); break;
     case 'setMapMode': collectNames(); SETUP.mapMode = v; renderSetup(); break;
     case 'gallery': renderGallery(); break;
+    case 'patchnotes': renderPatchNotes(); break;
     case 'gback': renderSetup(); break;
     case 'setPick': collectNames(); SETUP.pick = v; renderSetup(); break;
     case 'setHand': collectNames(); SETUP.handMode = v; renderSetup(); break;
@@ -6448,7 +6565,7 @@ document.addEventListener('click', e => {
       const cfg = SETUP.players.slice(0, SETUP.n).map((p,i) => { const ai = i > 0 && p.type !== 'human' ? p.type : null; return {name:((ai ? '' : (i === 0 ? myName0(p.name) : p.name)) || (ai ? 'AI ' + AI_LEVELS[ai] : `플레이어 ${i+1}`)).slice(0,12), char:p.char, ai, map:p.map || 'A'}; });
       applyMapMode(cfg);
       const me = shuffleSeats(cfg);
-      newGame(cfg, {advSkills:SETUP.adv, turnOrder:SETUP.turnVariant, handMode:SETUP.handMode, aiBonus:SETUP.aiBonus}); UI.view = me; beginSetupAid(); afterChange(); break;
+      newGame(cfg, {advSkills:SETUP.adv, turnOrder:SETUP.turnVariant, handMode:SETUP.handMode, aiBonus:SETUP.aiBonus, patches:SETUP.patchMode ? SETUP.patches : {}}); UI.view = me; beginSetupAid(); afterChange(); break;
     }
     case 'cfmok': { const f = CONFIRM && CONFIRM.fn; CONFIRM = null; renderConfirm(); if (f) f(); break; }
     case 'cfmno': CONFIRM = null; renderConfirm(); break;
@@ -6458,7 +6575,7 @@ document.addEventListener('click', e => {
         collectNames();
         const seats = SETUP.players.slice(0, SETUP.n).map((p,i) => i === 0 ? {type:'human', name:(myName0(p.name)||'방장').slice(0,12), char:p.char, map:p.map||'A', token:null}
           : p.type === 'human' ? {type:'human', name:'', char:null, token:null} : {type:'ai', level:p.type, name:('AI ' + AI_LEVELS[p.type]).slice(0,12), char:p.char, map:p.map||'A', token:null});
-        netCreate(seats, {advSkills:SETUP.adv, mapMode:SETUP.mapMode, pick:SETUP.pick, turnVariant:SETUP.turnVariant, handMode:SETUP.handMode});
+        netCreate(seats, {advSkills:SETUP.adv, mapMode:SETUP.mapMode, pick:SETUP.pick, turnVariant:SETUP.turnVariant, handMode:SETUP.handMode, patches:SETUP.patchMode ? SETUP.patches : {}});
       });
       break;
     }
@@ -6536,7 +6653,7 @@ document.addEventListener('click', e => {
     case 'tab': UI.tab = v; render(); break;
     case 'view': if (!pr) { UI.view = +v; render(); } break;
     case 'area': case 'play': case 'flip': case 'free': case 'mile': case 'pass': case 'endturn': case 'undo': case 'freemenu':
-    case 'opt': case 'finish': case 'cancel': case 'hex': case 'edge': case 'aid': case 'pick': case 'cardsOk': case 'alloc': case 'allocOk': case 'cnt': case 'cntOk':
+    case 'opt': case 'finish': case 'cancel': case 'stepback': case 'hex': case 'edge': case 'aid': case 'pick': case 'cardsOk': case 'alloc': case 'allocOk': case 'cnt': case 'cntOk':
       if (!humanHere() || (pr && pr.ai)) return; break;
   }
   switch (a) {
@@ -6558,6 +6675,7 @@ document.addEventListener('click', e => {
     case 'opt': if (pr && pr.type === 'choice') answer(pr.options[+v].value); break;
     case 'finish': if (pr) answer(null); break;
     case 'cancel': cancelPrompt(); break;
+    case 'stepback': stepBack(); break;
     case 'hex': if (pr) answer(pr.type === 'mixed' ? {hex:v} : v); break;
     case 'edge': if (pr) answer(pr.type === 'mixed' ? {edge:v} : v); break;
     case 'aid': if (pr) answer(+v); break;
@@ -6582,6 +6700,8 @@ document.addEventListener('change', e => {
   if (e.target.id === 'turnvar') SETUP.turnVariant = e.target.checked;
   if (e.target.id === 'randstart') SETUP.randStart = e.target.checked;
   if (e.target.id === 'aibonus') SETUP.aiBonus = e.target.checked;
+  if (e.target.id === 'patchmode') { SETUP.patchMode = e.target.checked; collectNames(); renderSetup(); }
+  if (e.target.classList.contains('balp')) SETUP.patches[e.target.dataset.id] = e.target.checked;
 });
 document.addEventListener('input', e => {
   if (e.target.classList.contains('pname')) setName(+e.target.dataset.i, e.target.value);
@@ -6640,7 +6760,7 @@ function draftStart(){
   const cfg = applyMapMode(D.cfg.map((c, i) => ({...c, char:D.picks[i]})));
   DRAFT = null;
   const me = Math.max(0, cfg.findIndex(c => !c.ai));   // 자리 순서는 뽑기 전에 이미 정해짐
-  newGame(cfg, {advSkills:SETUP.adv, turnOrder:SETUP.turnVariant, handMode:SETUP.handMode, aiBonus:SETUP.aiBonus}); UI.view = me; beginSetupAid(); afterChange();
+  newGame(cfg, {advSkills:SETUP.adv, turnOrder:SETUP.turnVariant, handMode:SETUP.handMode, aiBonus:SETUP.aiBonus, patches:SETUP.patchMode ? SETUP.patches : {}}); UI.view = me; beginSetupAid(); afterChange();
 }
 // 자리 순서를 무작위로 섞음 (내 자리가 항상 1등 시작이 되지 않도록). 반환값: 첫 번째 사람 플레이어의 자리 번호
 function shuffleSeats(cfg){
