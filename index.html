@@ -3758,8 +3758,9 @@ function resVal(p, r){
 const AIW = {};
 // vpBonus: 패스할 때마다 AI에게 주는 승점 (인원별) — 평균 점수가 초급≈140 · 중급≈220 · 고급≈300이 되도록 시뮬레이션으로 맞춤
 const AIP = {bonus:{}, vpBonus:{beginner:{2:30, 3:31, 4:31}, mid:{2:30, 3:33, 4:35}, adv:{2:43, 3:44, 4:45}}, portW:{mid:12, adv:20}, portDist:{mid:1.2, adv:2}, handPen:{adv:0.5}, th:{adv:0.8, mid:0.3}, cardBonus:0, autoVal:0, clock:1, charFree:1, portLv:{mid:1, adv:1},
-  strat:{mid:1, adv:1}, dz:{tile:6, road:8, dist:6, route:16}, clockW:3, wonderFood:0, clockCard:2, incW:1.5, goalW:5, reserve:1, nonGoalMul:0.5, prospOverride:1, clockProp:6, incPickRound:2, incPickW:1, wonderCross:4.5,
+  strat:{mid:1, adv:1}, dz:{tile:6, road:8, dist:6, route:16, plan:26, act:5}, clockW:3, wonderFood:1.2, clockCard:2, incW:1.5, goalW:5, reserve:1, nonGoalMul:0.5, prospOverride:1, clockProp:6, incPickRound:2, incPickW:1, wonderCross:4.5,
   uv:{tile:3, road:3, food:3, ind:2.5, inc:2.5}, openBonus:0, learnW:1.5, decW:2.5, cardK:5.5, plcW:3.2, caseW:4, incPlanW:2, passCardK:0.8};   // uv: 사용자 가치표 (땅·다리·빵 3 / 산업 2.5 / 자원 수입 2.5) — 고급 AI만 사용
+const clockMul = () => G.round <= 2 ? 0.8 : G.round <= 4 ? 2.2 : 0.3;   // 시계탑 능력은 패스 때마다 받으니 일찍 열수록 이득
 const uvCur = () => (G && P(G.cur) && P(G.cur).ai) ? AIP.uv : null;   // 가치표는 모든 등급 공통 (등급 차이는 무작위·학습 반영 비중)
 // INC_ROUND: 라운드별 수입 가치 가중 — 사람 기록(4라운드 기본 자원 수입 31 vs AI 11~17)을 보고 1~3라운드 수입을 더 높게 침
 const AI_K = 0.8, INC_ROUND = [0, 1.7, 1.3, 0.85, 0.4, 0];
@@ -3767,8 +3768,8 @@ function effVal(p, e){
   const w = (G && P(G.cur) && P(G.cur).ai === 'adv') ? AIW[e.t] : undefined; let v = effValBase(p, e) * (w === undefined ? 1 : w);
   if (stratOn()) {
     if ((e.t === 'income' || e.t === 'incAny') && G.round <= 3) v *= AIP.incW;
-    if (e.t === 'wonder' && clockNeeds(p)) v += AIP.clockW;
-    if (e.t === 'food' && clockNeeds(p) && p.wonders === 0 && p.food < 5) v += Math.min(e.n, 5 - p.food) * AIP.wonderFood + (p.food + e.n >= 5 ? AIP.wonderCross : 0);   // 음식 5칸 = 원더 (시계탑 조건)
+    if (e.t === 'wonder' && clockNeeds(p)) v += AIP.clockW * clockMul();
+    if (e.t === 'food' && clockNeeds(p) && p.wonders === 0 && p.food < 5) v += Math.min(e.n, 5 - p.food) * AIP.wonderFood * clockMul() + (p.food + e.n >= 5 ? AIP.wonderCross * clockMul() : 0);   // 음식 5칸 = 원더 (시계탑 조건)
     if (e.t === 'prosp' && G.round >= 3 && AIP.prospOverride) { const gs = PROSP.map((tr, i) => prospCanMove(p, i) ? prospGain(p, i) : -99); const m = Math.max(...gs); v = m > -99 ? Math.max(v, e.n * m) : 0; }
   }
   return v;
@@ -3890,7 +3891,7 @@ function areaValue(p, id, lv){
     if (spots < want || buildTokens(p, want, true, areaCost(p, id)).n < want) return null;   // 짓겠다고 한 개수를 모두 지을 수 있을 때만 이 행동을 고름
     const n = want;
     v = n * (5 + (G.round >= 3 ? 1 : 0)) - n * 3.2;
-    if (stratOn()) { const nd = clockNeeds(p); if (nd && nd.prop) v += Math.min(n, nd.prop.left) * AIP.clockProp * 0.6; }
+    if (stratOn()) { const nd = clockNeeds(p); if (nd && nd.prop) v += Math.min(n, nd.prop.left) * AIP.clockProp * 0.6 * clockMul(); }
   } else if (a.eff[0].t === 'copy') {
     // 모방 = 카드 1장 + 금 4(+복사한 구역의 자원 비용). 직접 가면 카드 (먼저 간 사람 수 + 1)장이 드므로, 카드 1장을 1.6점으로 보고 비교 (2장 이상 들 때 모방이 이득)
     const cands = copyTargets(p, a.eff[0].cats).filter(k => !uselessReason(p, AREAS[k].eff));
@@ -3902,7 +3903,7 @@ function areaValue(p, id, lv){
       if (AREAS[k].eff[0].t === 'prop') {   // 건설은 직접 갈 때와 같은 계산
         const want = AREAS[k].eff[0].n; if (propSpots(p, s => !s.prop).size < want || buildTokens(p, want, true, areaCost(p, k)).n < want) return null;
         ev = want * (5 + (G.round >= 3 ? 1 : 0)) - want * 3.2;
-        if (stratOn()) { const nd = clockNeeds(p); if (nd && nd.prop) ev += Math.min(want, nd.prop.left) * AIP.clockProp * 0.6; }
+        if (stratOn()) { const nd = clockNeeds(p); if (nd && nd.prop) ev += Math.min(want, nd.prop.left) * AIP.clockProp * 0.6 * clockMul(); }
       } else ev = effsVal(p, AREAS[k].eff);
       ev += charFit(p, k, AREAS[k]) + (stratOn() ? focusAdj(p, k, AREAS[k]) : 0) + (lv === 'adv' ? cityPlanAdj(p, k, AREAS[k]) : 0);   // 복사한 구역에 대한 캐릭터·방향 가산도 직접 갈 때와 같게
       return ev - resVal(p, areaCost(p, k)) + (direct > 1 ? (direct - 1) * Math.max(0, CARD_V - hp * 0.8) : 0);
@@ -3934,7 +3935,10 @@ function aiAnswer(pr){
     switch (pr.type) {
       case 'aid': return lv === 'beginner' ? rnd(pr.valid) : bestBy(pr.valid, i => aidValue(p, i) + (lv === 'mid' ? Math.random() : 0));
       case 'cards': return pr.any ? aiRerollPick(p) : worstCards(p, pr.range ? pr.min : pr.count);
-      case 'hex': { const v = [...pr.valid]; if (!v.length) return null; return lv === 'beginner' ? rnd(v) : bestBy(v, k => hexScore(p, k, pr.text) + plcBias(p, plcKind(p, k, pr.text), k) + Math.random() * 0.3); }
+      case 'hex': { const v = [...pr.valid]; if (!v.length) return null;
+        if (/뒤집을 앞면/.test(pr.text) && lv !== 'beginner') return bestBy(v, k => {   // 로터스 뒤집기: 방금 놓은 특수 지형(성) 타일을 먼저, 도로가 곧 뒤집어 줄 타일은 뒤로
+          const t = p.tiles[k]; let sc = effsVal(p, tileEffect(spot(p, k))); if (t && t.type === 'special') sc += 6; if (HEX[k].edges.some(e => p.roads.includes(e))) sc -= 3; return sc + Math.random() * 0.2; });
+        return lv === 'beginner' ? rnd(v) : bestBy(v, k => hexScore(p, k, pr.text) + plcBias(p, plcKind(p, k, pr.text), k) + Math.random() * 0.3); }
       case 'edge': { const v = [...pr.valid]; if (!v.length) return null; if (lv === 'beginner') { const ok = v.filter(ek => edgeScore(p, ek) > 0); return rnd(ok.length ? ok : v); } return bestBy(v, ek => edgeScore(p, ek) + plcBias(p, 'e', ek) + Math.random() * 0.3); }
       case 'mixed': {
         const h = [...pr.valid], e = [...pr.validEdge];
@@ -4403,8 +4407,14 @@ function charFit(p, id, a){
   if (!p.clock) {
     let needTerr = false, needProp = false;
     try { for (const q of clockReqs(p)) { if (q.or) continue; const [n, v, g] = q; if (v >= g) continue; if (/타일/.test(n)) needTerr = true; if (/텐트|하우스|빌딩|건축물|연구소/.test(n)) needProp = true; } } catch(e){}
-    for (const e of a.eff) { if (needTerr && (e.t === 'terrain' || e.t === 'terrainRoad')) b += AIP.clockW; if (needProp && e.t === 'prop') b += AIP.clockW; }
+    for (const e of a.eff) { if (needTerr && (e.t === 'terrain' || e.t === 'terrainRoad')) b += AIP.clockW * clockMul(); if (needProp && e.t === 'prop') b += AIP.clockW * clockMul(); }
   }
+  if (stratOn()) { const fp = firstPlan(p); if (fp && fp.n > 0) for (const e of a.eff) if (e.t === 'terrain' || e.t === 'terrainRoad') b += 4 * Math.min(e.n || 1, fp.n); }
+  if (stratOn()) { const pl = dzPlan(p); if (pl) for (const e of a.eff) {   // 카드 추가 구역 계획: 타일·도로가 더 필요한 만큼 그 행동 칸 가산
+    const n = e.n || 1;
+    if ((e.t === 'terrain' || e.t === 'terrainRoad') && pl.tc > 0) b += AIP.dz.act * Math.min(n, pl.tc) * dzPlanW(p);
+    if ((e.t === 'road' || e.t === 'terrainRoad') && pl.rc > 0) b += AIP.dz.act * Math.min(n, Math.ceil(pl.rc)) * dzPlanW(p);
+  } }
   return b;
 }
 // ===== AI 전략 (1~3라운드: 카드 +1 구역 · 캐릭터 시계탑 해금 · 수입 늘리기 / 4~5라운드: 번영 트랙 2개 끝까지 · 항구 4개) =====
@@ -4422,6 +4432,61 @@ function dzChain(p){
   }
   p._dzc = {key, v:best}; return best;
 }
+
+// ===== 카드 추가 구역(D) 계획: 1~4라운드 안에 (타일 줄 + 도로 줄)로 D 하나를 여는 가장 싼 길을 정하고, 타일과 도로를 같은 길에 놓음 =====
+function dzPlan(p){
+  if (!stratOn() || G.round > 4 || p.drawActive.length) return null;
+  const key = p.roads.join(',') + '|' + Object.keys(p.tiles).join(',') + '|' + p.char + p.map;
+  if (p._dzp && p._dzp.key === key) return p._dzp.v;
+  const roads = new Set(p.roads), tiles = p.tiles;
+  // 타일 줄: 수도·내 타일에서 각 칸까지 새로 깔아야 할 타일 수
+  const tcost = {}, tprev = {}, tq = [];
+  const land = k => TERRAIN[tch(p, k)] && !isCap(k);
+  for (const k of [...CAPITALS, ...Object.keys(tiles)]) { tcost[k] = 0; tq.push(k); }
+  for (let i = 0; i < tq.length; i++) { const k = tq[i]; for (const n of HEX[k].nb) { if (!land(n)) continue; const c = tcost[k] + (tiles[n] ? 0 : 1); if (tcost[n] === undefined || c < tcost[n]) { tcost[n] = c; tprev[n] = k; tq.push(n); } } }
+  // 도로: 도로망에서 각 꼭짓점까지 (타일 줄을 따라가는 변은 약간 싸게)
+  let best = null;
+  for (const d of dzTargets(p)) {
+    const goal = d.nb.filter(n => land(n) && tcost[n] !== undefined); if (!goal.length) continue;
+    const g = goal.reduce((a, b) => tcost[b] < tcost[a] ? b : a);   // 목표 타일
+    const T = new Set(); for (let x = g; x && !isCap(x) && !(x in tiles && tcost[x] === 0); x = tprev[x]) { if (!tiles[x]) T.add(x); if (tcost[x] === 0) break; }
+    const dist = {}, prev = {}, q = [];
+    for (const v of CAP_VERTS) { dist[v] = 0; q.push(v); }
+    for (const k of roads) for (const v of [EDGE[k].a, EDGE[k].b]) if (dist[v] === undefined) { dist[v] = 0; q.push(v); }
+    const tset = new Set([...T, ...Object.keys(tiles)]);
+    while (q.length) { q.sort((a, b) => dist[b] - dist[a]); const v = q.pop();
+      for (const ek of VERT_EDGES[v] || []) { if (BLOCKED_EDGES.has(ek) || roads.has(ek)) continue; const e = EDGE[ek], w = e.a === v ? e.b : e.a;
+        const c = dist[v] + 1 - (e.hexes.some(h => tset.has(h)) ? 0.3 : 0);
+        if (dist[w] === undefined || c < dist[w] - 1e-9) { dist[w] = c; prev[w] = ek; q.push(w); } } }
+    let bv = null, be = null;
+    for (const ek of d.edges) { if (BLOCKED_EDGES.has(ek) || roads.has(ek)) continue; const e = EDGE[ek]; const dv = Math.min(dist[e.a] ?? 99, dist[e.b] ?? 99); const v = (dist[e.a] ?? 99) <= (dist[e.b] ?? 99) ? e.a : e.b; if (bv === null || dv < bv.d) { bv = {d:dv, v}; be = ek; } }
+    if (be === null && d.edges.some(e => roads.has(e))) { be = null; bv = {d:0, v:null}; }
+    if (!bv || bv.d >= 90) continue;
+    const R = new Set(); if (be) R.add(be);
+    for (let v = bv.v; v !== null && prev[v] !== undefined && dist[v] > 0;) { const ek = prev[v]; R.add(ek); const e = EDGE[ek]; v = e.a === v ? e.b : e.a; }
+    const pt = prefTerr(p), cost = tcost[g] + bv.d - (goal.some(n => TERRAIN[tch(p, n)] === pt) ? 2.5 : 0);   // 캐릭터가 늘리려는 자원 쪽 구역을 선호
+    if (!best || cost < best.cost) best = {d, g, T, R, cost, tc:tcost[g], rc:bv.d};
+  }
+  p._dzp = {key, v:best}; return best;
+}
+const FIRST_WONDER = ['lotus', 'jasmine'];   // 카드 구역보다 성(특수 지형) 타일·기술 타일을 먼저 챙기는 편이 나은 캐릭터
+function prefTerr(p){ const r = (charOf(p) || {}).clock || {}; if (r.terr && r.terr[0] !== 'any') return r.terr[0]; return aiFocus(p) === 'ind' ? 'mine' : 'wheat'; }
+// 로터스(특수 지형=성 타일)·쟈스민(기술 타일 보상 칸): 수도에서 그 칸까지 타일 줄을 먼저 깔아 간다 (로터스는 능력으로 바로 뒤집음)
+function firstPlan(p){
+  if (!stratOn() || !FIRST_WONDER.includes(p.char) || G.round > 3) return null;
+  const key = Object.keys(p.tiles).join(',') + '|' + p.char + p.map; if (p._fp && p._fp.key === key) return p._fp.v;
+  const land = k => TERRAIN[tch(p, k)] && !isCap(k);
+  const tcost = {}, tprev = {}, q = [];
+  for (const k of [...CAPITALS, ...Object.keys(p.tiles)]) { tcost[k] = 0; q.push(k); }
+  for (let i = 0; i < q.length; i++) { const k = q[i]; for (const n of HEX[k].nb) { if (!land(n)) continue; const c = tcost[k] + (p.tiles[n] ? 0 : 1); if (tcost[n] === undefined || c < tcost[n]) { tcost[n] = c; tprev[n] = k; q.push(n); } } }
+  const tg = p.char === 'lotus' ? Object.values(HEX).filter(h => h.ch === 'X').map(h => h.k) : Object.entries(MAP_ICONS[p.map || 'A']).filter(([k, v]) => v.some(e => e.t === 'skill')).map(([k]) => k);
+  let best = null;
+  for (const g of tg) { if (p.tiles[g] || tcost[g] === undefined || !land(g)) continue; if (!best || tcost[g] < tcost[best]) best = g; }
+  let v = null;
+  if (best) { const T = new Set(); for (let x = best; x && tcost[x] > 0 || (x && !p.tiles[x] && !isCap(x)); x = tprev[x]) { if (!p.tiles[x]) T.add(x); if (!tprev[x]) break; } v = {g:best, T, n:tcost[best]}; }
+  p._fp = {key, v}; return v;
+}
+const dzPlanW = (p) => { const w = G.round === 1 ? 1.3 : G.round === 2 ? 1.15 : G.round === 3 ? 1 : 0.6; return p && FIRST_WONDER.includes(p.char) && G.round <= 2 ? w * 0.45 : w; };
 function dzTargets(p){ return Object.values(HEX).filter(h => h.ch === 'D' && !p.drawActive.includes(h.k)); }
 function clockNeeds(p){   // 시계탑 해금까지 모자란 것
   if (p.clock) return null; const r = (charOf(p) || {}).clock || {}, out = {};
@@ -4516,12 +4581,18 @@ function hexScore(p, k, text){
     if (h.ch === 'X') s += 3;
     if (CITY_PLAN_ON && P(G.cur).ai !== 'beginner') { const cp = cityPlan(p); if (cp && cp.need > 0) { const n = siteSize(p, k); s += n === 0 ? -1 : n <= 3 ? 1.5 * n : 0.5; } }   // 새 도시를 따로 만들 수 있는 자리가 생기게
     if (stratOn()) {
+      { const pl = dzPlan(p); if (pl && pl.T.has(k)) s += AIP.dz.plan * dzPlanW(p); }
+      if (FIRST_WONDER.includes(p.char) && G.round <= 3) {   // 성(특수 지형) 타일·기술 타일 보상 칸을 먼저 차지
+        if (h.ch === 'X') s += 7;
+        const ic = iconsOf(p, k); if (ic && ic.some(e => e.t === 'skill')) s += 7;
+        const fp = firstPlan(p); if (fp && fp.T.has(k)) s += 24;
+      }
       for (const d of dzTargets(p)) {
         if (!h.nb.includes(d.k)) continue;
         if (!d.nb.some(n => p.tiles[n])) s += AIP.dz.tile * (d.edges.some(e => p.roads.includes(e)) ? 1.6 : 1);
       }
       const need = clockNeeds(p);
-      if (need && need.terr && (need.terr.type === 'any' || TERRAIN[tch(p, k)] === need.terr.type)) s += AIP.clockW * 0.5;
+      if (need && need.terr && (need.terr.type === 'any' || TERRAIN[tch(p, k)] === need.terr.type)) s += AIP.clockW * (need.terr.type === 'any' ? 0.5 : 2.4) * clockMul();
       if (G.round <= 3) {   // 카드 추가 구역까지 타일을 이어 가기
         const ch = dzChain(p);
         if (ch && ch.now > 0) { const dk = Math.min(...ch.goal.map(g => hexDist(k, g))); if (dk < ch.now) s += AIP.dz.dist * (ch.now - dk) * (G.round === 1 ? 1.6 : G.round === 2 ? 1.3 : 1); }
@@ -4638,7 +4709,7 @@ function dzRoute(p, ek){
 function edgeScore(p, ek){
   if (!EDGE_CEN) { const hs = Object.values(HEX); const cx = hs.reduce((t, h) => t + h.x, 0) / hs.length, cy = hs.reduce((t, h) => t + h.y, 0) / hs.length; EDGE_CEN = {cx, cy, max:Math.max(...hs.map(h => Math.hypot(h.x - cx, h.y - cy))) || 1}; }
   const e = EDGE[ek], mx = (e.p1[0] + e.p2[0]) / 2, my = (e.p1[1] + e.p2[1]) / 2;
-  return edgeScore0(p, ek) + dzRoute(p, ek) - 0.8 * Math.hypot(mx - EDGE_CEN.cx, my - EDGE_CEN.cy) / EDGE_CEN.max;
+  return edgeScore0(p, ek) + dzRoute(p, ek) + (() => { const pl = dzPlan(p); return pl && pl.R.has(ek) ? AIP.dz.plan * dzPlanW(p) : 0; })() - 0.8 * Math.hypot(mx - EDGE_CEN.cx, my - EDGE_CEN.cy) / EDGE_CEN.max;
 }
 const SKILL_PREF = {beginner:[], mid:[9,8,7,10,1,2,3,11,12,5,4,6], adv:[10,12,1,2,3,9,8,7,11,5,6,4]};
 const PROP_PREF = {tent:3, house:2.6, building:2.4, coffee:2, lab:1.2};
@@ -4662,7 +4733,7 @@ function chooseOpt(pr, p, lv){
       if (x.type === 'coffee') s += p.cols[COFFEE[x.idx].c].length;
       if (stratOn() && x.type === 'lab' && aiFocus(p) === 'ind' && p.props.lab < 4) s += 2.5;
       if (stratOn() && x.type === 'tent' && aiFocus(p) === 'food') s += 1;
-      if (stratOn()) { const nd = clockNeeds(p); if (nd && nd.prop && (nd.prop.type === 'any' || nd.prop.type === x.type)) s += AIP.clockProp; }
+      if (stratOn()) { const nd = clockNeeds(p); if (nd && nd.prop && (nd.prop.type === 'any' || nd.prop.type === x.type)) s += AIP.clockProp * clockMul(); }
       return s + noise(); });
     return best.value;
   }
@@ -4697,6 +4768,7 @@ function prospGain(p, i){
 }
 
 // ---------- AI 차례 ----------
+const DIA_AREAS = ['G', 'I', 'I2'];   // 다이아몬드 가져가기 · 다이아 2개 내고 번영 올리기: '빈칸 우선' 규칙 밖
 async function aiTurn(pi){
   const lv = aiLv(pi);
   await sleep(AI_DELAY());
@@ -4713,7 +4785,7 @@ async function aiTurn(pi){
   p = P(pi);
   const cands = [];
   // 빈 행동칸(첣 칸, 손패 1장)을 우선: 이미 누가 들어간 구역은 들어가는 칸 하나당 점수를 3씩 깎음 (다이아 2개 번영 구역 G는 제외)
-  for (const id of Object.keys(G.areas)) { let v = areaValue(p, id, lv); if (v != null) { const v0 = v; if (id !== 'G') v -= AIP.cardK * Math.max(0, areaState(id).idx); cands.push({kind:'area', id, v, v0}); } }
+  for (const id of Object.keys(G.areas)) { let v = areaValue(p, id, lv); if (v != null) { const v0 = v; if (!DIA_AREAS.includes(id)) v -= AIP.cardK * Math.max(0, areaState(id).idx); cands.push({kind:'area', id, v, v0}); } }
   for (const id of p.skills) { const s = skillDef(id); if (s.kind === 'flip' && !p.skillFlipped.includes(id) && (!s.cost || canPay(p, s.cost))) cands.push({kind:'flip', id, v:effsVal(p, s.eff) * (lv === 'mid' ? 0.75 + Math.random()*0.5 : 1)}); }
   p.hand.forEach((cid, hi) => { const c = cardOf(cid); const cnet = (!c.blank && lv !== 'beginner' && c.kind === 'immediate') ? cardNet(p, c) : null; if (!c.blank && canPay(p, cardCost(p, c)) && handOk(p, 1) && (cnet === null || cnet >= AIP.cardMin || (stratOn() && (clockNeeds(p) || {}).cards))) cands.push({kind:'card', hi, v:(cnet !== null ? cnet * AI_K : (c.kind === 'pass' && lv !== 'beginner' ? passCardVal(p, c) : effsVal(p, c.now)) - resVal(p, cardCost(p, c))) + (c.kind === 'pass' ? 2 : 0) + AIP.cardBonus + (c.industry && p.res.diamond >= 1 ? AIP.autoVal : 0) + (stratOn() && (clockNeeds(p) || {}).cards ? AIP.clockCard : 0) - (stratOn() && (cardCost(p, c).diamond || 0) && p.res.diamond - cardCost(p, c).diamond < diamondReserve(p) ? 8 : 0)}); });
   let pick = null;
@@ -4722,14 +4794,14 @@ async function aiTurn(pi){
   // 시민 모집(카드 2장) → 행동 디스크 가져가기 순서로 비어 있는 칸부터 한다 (모든 난이도)
   const first = ['J', 'J2'].concat(p.discs < 3 ? ['H', 'H2'] : []).map(id => cands.find(c => c.kind === 'area' && c.id === id)).find(Boolean);
   if (first) pick = first;
-  else if (lv === 'beginner') { const fresh = cands.filter(c => c.kind !== 'area' || c.id === 'G' || areaState(c.id).idx === 0); const pool = fresh.length ? fresh : cands; pick = pool.length && Math.random() < 0.9 ? rnd(pool) : null; }
+  else if (lv === 'beginner') { const fresh = cands.filter(c => c.kind !== 'area' || DIA_AREAS.includes(c.id) || areaState(c.id).idx === 0); const pool = fresh.length ? fresh : cands; pick = pool.length && Math.random() < 0.9 ? rnd(pool) : null; }
   else {
     cands.sort((a,b) => b.v - a.v);
     const th = AIP.th[lv] === undefined ? 0.3 : AIP.th[lv];
     const good = cands.filter(c => (c.v0 !== undefined ? c.v0 : c.v) > th);
     // 중급은 상위 3개 중 하나를 고르고, 고급은 항상 최선을 고른다
     // 비어 있는 행동칸(첫 칸)을 우선: 이미 누가 들어간 구역은 비어 있는 선택지가 하나도 없을 때만 고른다 (지금 할 수 있는 칸만 후보라서 못 하는 칸은 고르지 않음)
-    const fresh = good.filter(c => c.kind !== 'area' || c.id === 'G' || areaState(c.id).idx === 0), pool = fresh.some(c => c.kind === 'area') || fresh.length ? fresh : good;
+    const fresh = good.filter(c => c.kind !== 'area' || DIA_AREAS.includes(c.id) || areaState(c.id).idx === 0), pool = fresh.some(c => c.kind === 'area') || fresh.length ? fresh : good;
     pick = !pool.length ? null : lv === 'adv' ? pool[0] : rnd(pool.slice(0, 3));
   }
   if (pick && pick.kind === 'area') { if (stratOn() && G.round === 1) { const nx = openNext(p); if (nx && nx === pick.id) (p.openDone = p.openDone || []).push(nx); } await useArea(pi, pick.id); }
