@@ -367,6 +367,7 @@ th,td{padding:6px 8px; border-bottom:1px solid var(--line); text-align:left}
 th{font-size:12px; color:var(--muted); font-weight:400}
 
 .chip{font-family:var(--f-body); font-size:11px; background:var(--accent); color:var(--accent-ink); border-radius:999px; padding:1px 8px; vertical-align:middle}
+.rechead{display:flex; align-items:baseline; justify-content:space-between; gap:8px} .rectot{font-size:14px; font-weight:400; color:var(--muted)} .rectot b{font-size:16px}
 .clockreq{margin-top:8px; font-size:12px; color:var(--muted); background:var(--sunk); border-radius:6px; padding:5px 8px}
 .stats i{font-style:normal; color:var(--muted)}
 .panel-head.mt2{margin-top:14px}
@@ -1381,8 +1382,8 @@ const ADV_SKILLS = [
   {id:110, kind:'perm', name:'브라우니 장인', text:'브라우니 태그 1개당 카드 비용 금 1 감소 (카드 등록 후)'},
   {id:111, kind:'perm', name:'자동화 공장', text:'산업 열 한도 +1 / 얻을 때 카드 1장 뽑고 무료 자동화', eff:[{t:'auto1'}]},
   {id:112, kind:'perm', name:'시민 영웅', text:'시민 카드를 쓸 때마다 2점'},
-  {id:113, kind:'perm', name:'도로 공사', text:'도로 행동(D)의 비용이 목재 3개로 바뀜 (복사 포함)'},
-  {id:114, kind:'perm', name:'개간 사업', text:'개간 행동(A)의 비용이 밀 4개로 바뀜 (복사 포함)'},
+  {id:113, kind:'perm', name:'도로 공사', get text(){ return balOn('road3') ? '도로를 놓는 행동(도로 D·대개척 M)의 목재 비용 3 할인 (복사 포함)' : '도로 행동(D)의 비용이 목재 3개로 바뀜 (복사 포함)'; }},   // 밸런스 패치 road3
+  {id:114, kind:'perm', name:'개간 사업', get text(){ return balOn('reclaim2') ? '지형 타일을 놓는 행동(개간 A·대개척 M)의 밀 비용 2 할인 (복사 포함)' : '개간 행동(A)의 비용이 밀 4개로 바뀜 (복사 포함)'; }},   // 밸런스 패치 reclaim2
 ];
 const skillDef = id => SKILLS.find(s => s.id === id) || ADV_SKILLS.find(s => s.id === id);
 const skillImg = id => id > 100 ? `img/adv${id-100}.jpg` : `img/sk-${id}.jpg`;
@@ -2207,7 +2208,8 @@ const tch = (p, k) => { const [c, r] = k.split(',').map(Number); return MAPS[p.m
 const iconsOf = (p, k) => MAP_ICONS[p.map || 'A'][k];
 const CAP_EDGES = new Set(CAPITALS.flatMap(k => HEX[k].edges));
 // 도로(다리)를 놓을 수 없는 변: 오른쪽 카드 받는 구역(D)의 오른쪽 아래 변
-const BLOCKED_EDGES = new Set(HEX['7,2'] ? [HEX['7,2'].edges[1]] : []);
+// 카드 추가 구역(D)은 6각형이 아니라 맵 가장자리에 걸친 반쪽짜리 칸: 바깥쪽(맵 테두리) 변에는 도로를 놓을 수 없음 — 이웃 타일과 맞닿은 변만 가능
+const BLOCKED_EDGES = new Set(Object.values(HEX).filter(h => h.ch === 'D').flatMap(h => h.edges.filter(e => EDGE[e].hexes.length < 2)).concat(HEX['7,2'] ? [HEX['7,2'].edges[1]] : []));
 
 let G = null;
 // 게임 중 승점 출처 기록: char(캐릭터 능력) · passCard(패스 카드) · passAid(패스 지원 타일) · skill(기술 타일) · ai(AI 보너스) · other
@@ -2903,6 +2905,7 @@ async function placeTerrain(pi, n, only){
     if (only) valid = new Set([...valid].filter(k => TERRAIN[tch(P(pi), k)] === only));
     if (!valid.size) { log(only ? `놓을 수 있는 ${TILE_NAME[only]} 칸이 없습니다` : '놓을 수 있는 지형 칸이 없습니다'); break; }
     const k = await ask({type:'hex', text:`${only ? TILE_NAME[only] + ' ' : ''}지형 타일을 놓을 칸 (${i+1}/${n})`, valid, finish:true});
+    if (k == null && P(pi).ai) k = [...validTerrain(P(pi))].filter(x => valid.has(x))[0];   // AI는 타일을 건너뛰지 않음
     if (k == null) break;
     await putTile(pi, k);
   }
@@ -3208,8 +3211,8 @@ function handOk(p, lose){ return p.hand.length >= lose && (G.round >= 5 || p.han
 function areaCost(p, id){
   const c = {...AREAS[id].cost};
   if (p.char === 'nata' && (id === 'F' || id === 'Q') && c.iron) c.iron = Math.max(0, c.iron - 1);
-  if (id === 'D' && hasSkill(p, 113)) c.wood = 3;
-  if (id === 'A' && hasSkill(p, 114)) c.wheat = 4;
+  if (hasSkill(p, 113)) { if (balOn('road3')) { if (AREAS[id].eff.some(e => e.t === 'road' || e.t === 'terrainRoad') && c.wood) c.wood = Math.max(0, c.wood - 3); } else if (id === 'D') c.wood = 3; }
+  if (hasSkill(p, 114)) { if (balOn('reclaim2')) { if (AREAS[id].eff.some(e => e.t === 'terrain' || e.t === 'terrainRoad') && c.wheat) c.wheat = Math.max(0, c.wheat - 2); } else if (id === 'A') c.wheat = 4; }
   return c;
 }
 function canPayArea(p, id){
@@ -3429,7 +3432,7 @@ function freeAction(pi, key){ ACT_INFO = {kind:'free', key};
     const saved = UI.prompt; UI.prompt = null; UI.nested = true; if (ACT) ACT.noStep = true;
     log(`${p.name}: (행동 중) 자유행동 — ${FREE[key].label}`);
     const snap = clone(G);
-    freeCore(pi, key).then(() => { if (!ACT_ANS.length && ACT_CBASE) ACT_CBASE = clone(G); /* 아직 고른 게 없으면 끝낸 자유행동은 취소해도 남김 */ }).catch(e => {
+    freeCore(pi, key).then(() => { if (!ACT_ANS.length && ACT_CBASE && gSig(snap) === gSig(ACT_CBASE)) ACT_CBASE = clone(G);   /* 본 행동이 아직 아무것도 바꾸지 않았을 때만 (카드 사용처럼 선택 전에 카드·비용이 빠진 상태는 기준으로 삼지 않음) */ /* 아직 고른 게 없으면 끝낸 자유행동은 취소해도 남김 */ }).catch(e => {
       if (e === CANCEL) { restoreInPlace(G, snap); log(`${p.name}: 자유행동을 취소했습니다`); UI.freeOpen = true; }
       else console.error(e);
     }).finally(() => { UI.nested = false; UI.prompt = saved; UI.sel = []; render(); });
@@ -3579,20 +3582,24 @@ function score(p, pi){
 
 // ---------- 저장 ----------
 const SAVE_KEY = 'sweetland-save-v2';
-function save(){ if (!G || G.mode === 'online') return; try { localStorage.setItem(SAVE_KEY, JSON.stringify(G)); localStorage.setItem(SAVE_AT_KEY, String(Date.now())); } catch(e){} cloudAuto(); if (G.phase === 'end') { aiLearnOnEnd(); cloudRecord(); } }
+// 행동 도중(선택 대기 중)에는 반쯤 진행된 상태(예: 카드는 손에서 빠졌는데 아직 사용 목록에 안 들어간 상태)를 저장하지 않고 행동 시작 전 상태를 저장
+const stableG = () => (G && UI.busy && G.phase === 'action' && (ACT_CBASE || ACT_SNAP)) || G;
+const gSig = g => JSON.stringify(g, (k, v) => (k === 'log' || k === 'flog' || k === '_pl') ? undefined : v);
+function save(){ if (!G || G.mode === 'online') return; try { localStorage.setItem(SAVE_KEY, JSON.stringify(stableG())); localStorage.setItem(SAVE_AT_KEY, String(Date.now())); } catch(e){} cloudAuto(); if (G.phase === 'end') { aiLearnOnEnd(); cloudRecord(); } }
 function loadSave(){ try { const s = localStorage.getItem(SAVE_KEY); return s ? migrateState(JSON.parse(s)) : null; } catch(e){ return null; } }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(SAVE_AT_KEY); } catch(e){} cloudDelete(); }
 // ---------- 계정(아이디·비밀번호·닉네임) · 기기 간 이어하기 · 게임 기록 ----------
 const SAVE_AT_KEY = 'sweetland-save-at';
 const PW_PAD = '#sweet';            // Firebase는 비밀번호 6자 이상만 받아서 내부에서만 덧붙임 (사용자는 4자부터 가능)
 const ID_MAIL = '@sweetland.app';   // 아이디를 가짜 이메일로 바꿔 Firebase 이메일 로그인에 사용 (메일은 보내지 않음)
+let RECTOTAL = null;
 let cloudTimer = null, RECS = [], RECOPEN = null, RECVIEW = false, RECSC = null;
 const AUTH = {mode:'login', id:'', nick:''};
 const localSaveAt = () => { try { return +localStorage.getItem(SAVE_AT_KEY) || 0; } catch(e){ return 0; } };
 function cloudUser(){ const a = NET.fb && NET.fb.auth, u = a && a.currentUser; return u && !u.isAnonymous ? u : null; }
 const userPath = (u, rest) => 'users/' + u.uid + '/' + rest;
 async function cloudPush(g, at){
-  const u = cloudUser(); g = g || G;
+  const u = cloudUser(); g = g || stableG();
   if (!u || !NET.db || !g || g.mode === 'online') return;
   await NET.db.doc(userPath(u, 'save/current')).set({state:JSON.stringify(g), at:at || localSaveAt() || Date.now(), round:g.round, phase:g.phase});
 }
@@ -3637,7 +3644,9 @@ function cloudRecords(cb){
 function renderRecords(){
   RECVIEW = true; RECOPEN = null; RECSC = null;
   $app().innerHTML = `<div class="setup"><div class="panel cloud"><h3>내 게임 기록</h3><p class="muted">불러오는 중…</p><button class="btn ghost wide" data-a="gback">설정으로 돌아가기</button></div></div>`;
+  RECTOTAL = null;
   cloudRecords(list => { RECS = list; if (RECVIEW) drawRecords(); });
+  (async () => { try { const u = cloudUser(), c = u && NET.db && NET.db.collection('users/' + u.uid + '/records'); const n = c && c.count ? await c.count() : null; if (n != null) { RECTOTAL = n; if (RECVIEW && RECS.length) drawRecords(); } } catch (e) { console.error(e); } })();
 }
 function drawRecords(){
   const rows = RECS.map(r => {
@@ -3645,7 +3654,8 @@ function drawRecords(){
     const open = RECOPEN === r.id;
     return `<div class="rec"><div><b>${esc(new Date(r.at).toLocaleString('ko-KR'))}</b> <small>${(r.players || []).length}인 · ${r.round}라운드</small></div><div>${ps}</div><div class="cloud-row"><button class="btn ghost" data-a="recopen" data-v="${esc(r.id)}">${open ? '로그 닫기' : '로그 보기'}</button><button class="btn ghost" data-a="recscore" data-v="${esc(r.id)}">${RECSC === r.id ? '점수표 닫기' : '최종 점수표'}</button><button class="btn ghost" data-a="recdel" data-v="${esc(r.id)}">삭제</button></div>${RECSC === r.id ? `<div class="recsc">${r.fin && r.fin.length ? scoreTablesHTML(r.fin) : '<p class="muted">이 기록에는 상세 점수표가 저장되어 있지 않아요 (점수표 저장 기능이 생기기 전 게임). 순위와 합계만 볼 수 있어요.</p>' + '<div class="tablewrap"><table><thead><tr><th>순위</th><th>플레이어</th><th>캐릭터</th><th>합계</th></tr></thead><tbody>' + (r.players || []).map((p, k) => `<tr><td>${k + 1}</td><td>${esc(p.name)}${p.ai ? ' (AI)' : ''}</td><td>${esc(charNameById(p.char))}</td><td><b>${p.total}</b></td></tr>`).join('') + '</tbody></table></div>'}</div>` : ''}${open ? `<div class="reclog">${(r.log || []).slice().reverse().map(esc).join('\n')}</div>` : ''}</div>`;
   }).join('');
-  $app().innerHTML = `<div class="setup"><div class="panel cloud"><h3>내 게임 기록</h3>${rows || '<p class="muted">아직 기록이 없습니다. 로그인한 상태로 게임을 끝까지 하면 여기에 남아요.</p>'}<button class="btn ghost wide" data-a="gback">설정으로 돌아가기</button></div></div>`;
+  const total = RECTOTAL != null ? RECTOTAL : RECS.length;
+  $app().innerHTML = `<div class="setup"><div class="panel cloud"><h3 class="rechead">내 게임 기록<span class="rectot">총 <b>${total}</b>게임${RECTOTAL == null && RECS.length >= 30 ? '+' : ''}</span></h3>${total > RECS.length ? `<p class="muted">최근 ${RECS.length}게임만 보여 줍니다.</p>` : ''}${rows || '<p class="muted">아직 기록이 없습니다. 로그인한 상태로 게임을 끝까지 하면 여기에 남아요.</p>'}<button class="btn ghost wide" data-a="gback">설정으로 돌아가기</button></div></div>`;
 }
 function authCollect(){
   const a = document.getElementById('aid'), n = document.getElementById('anick');
@@ -3757,13 +3767,13 @@ function resVal(p, r){
 // AI 조정값 (효과 종류별 가중치 AIW, 기타 값 AIP) — 시뮬레이션으로 맞춘 값
 const AIW = {};
 // vpBonus: 패스할 때마다 AI에게 주는 승점 (인원별) — 평균 점수가 초급≈140 · 중급≈220 · 고급≈300이 되도록 시뮬레이션으로 맞춤
-const AIP = {bonus:{}, vpBonus:{beginner:{2:30, 3:31, 4:31}, mid:{2:30, 3:33, 4:35}, adv:{2:43, 3:44, 4:45}}, portW:{mid:12, adv:20}, portDist:{mid:1.2, adv:2}, handPen:{adv:0.5}, th:{adv:0.8, mid:0.3}, cardBonus:0, autoVal:0, clock:1, charFree:1, portLv:{mid:1, adv:1},
-  strat:{mid:1, adv:1}, dz:{tile:6, road:8, dist:6, route:16, plan:26, act:5}, clockW:3, wonderFood:1.2, clockCard:2, incW:1.5, goalW:5, reserve:1, nonGoalMul:0.5, prospOverride:1, clockProp:6, incPickRound:2, incPickW:1, wonderCross:4.5,
+const AIP = {bonus:{}, vpBonus:{beginner:{2:30, 3:31, 4:31}, mid:{2:30, 3:33, 4:35}, adv:{2:43, 3:44, 4:45}}, portW:{mid:12, adv:20}, portDist:{mid:1.2, adv:2}, handPen:{adv:0.5}, th:{adv:0.8, mid:0.3}, cardBonus:2, autoVal:0, clock:1, charFree:1, portLv:{mid:1, adv:1},
+  strat:{mid:1, adv:1}, dz:{tile:6, road:8, dist:6, route:16, plan:26, act:5}, portPlan:14, portAct:2.5, goldUp:1, citySpot:0, clockW:3, wonderFood:1.2, clockCard:2, incW:1.5, goalW:5, reserve:1, nonGoalMul:0.5, prospOverride:1, clockProp:6, incPickRound:2, incPickW:1, wonderCross:4.5,
   uv:{tile:3, road:3, food:3, ind:2.5, inc:2.5}, openBonus:0, learnW:1.5, decW:2.5, cardK:5.5, plcW:3.2, caseW:4, incPlanW:2, passCardK:0.8};   // uv: 사용자 가치표 (땅·다리·빵 3 / 산업 2.5 / 자원 수입 2.5) — 고급 AI만 사용
 const clockMul = () => G.round <= 2 ? 0.8 : G.round <= 4 ? 2.2 : 0.3;   // 시계탑 능력은 패스 때마다 받으니 일찍 열수록 이득
 const uvCur = () => (G && P(G.cur) && P(G.cur).ai) ? AIP.uv : null;   // 가치표는 모든 등급 공통 (등급 차이는 무작위·학습 반영 비중)
 // INC_ROUND: 라운드별 수입 가치 가중 — 사람 기록(4라운드 기본 자원 수입 31 vs AI 11~17)을 보고 1~3라운드 수입을 더 높게 침
-const AI_K = 0.8, INC_ROUND = [0, 1.7, 1.3, 0.85, 0.4, 0];
+const AI_K = 0.8, INC_ROUND = [0, 1.8, 1.6, 1.15, 0.45, 0];   // 2~3라운드 수입을 더 높게 (사람 기록: 3라운드 끝 기본 수입 24 vs AI 16)
 function effVal(p, e){
   const w = (G && P(G.cur) && P(G.cur).ai === 'adv') ? AIW[e.t] : undefined; let v = effValBase(p, e) * (w === undefined ? 1 : w);
   if (stratOn()) {
@@ -3828,7 +3838,7 @@ const effsVal = (p, effs) => (effs||[]).reduce((s,e) => s + effVal(p, e), 0);
 // ===== 카드 이득 계산 (자원 효율표: 땅·다리·빵 3 / 산업 2.5 / 토끼 6 / 건물 7.75 / 카드 1장 2 / 4원 = 1 / 자원 수입 2.5×라운드별 가중) =====
 // 표에 없는 효과(승점·번영·기술 타일 등)은 기존 AI 가치를 자원 단위로 환산해 쓰고, 다이아 1개는 임시로 4자원로 봅니다.
 const CV = {res:{wheat:1, wood:1, iron:1, gold:0.25, diamond:4}, tile:3, road:3, food:3, ind:2.5, rabbit:6, prop:7.75, draw:2, inc:2.5, hand:2, basic:1};
-AIP.cardMin = 1;      // 카드를 낼 만한 최소 이득(자원). 이보다 작으면 턴을 미루는 손해라서 디스크로 행동함
+AIP.cardMin = -0.5;      // 카드를 낼 만한 최소 이득(자원). 이보다 작으면 턴을 미루는 손해라서 디스크로 행동함
 const cvRes = r => Object.entries(r || {}).reduce((s, [k, n]) => s + n * (CV.res[k] === undefined ? 1 : CV.res[k]), 0);
 const cvInc = r => Object.entries(r || {}).reduce((s, [k, n]) => s + n * (k === 'gold' ? 0.25 : 1) * CV.inc * (INC_ROUND[G.round] || 0), 0);
 function cvEff(p, e){
@@ -3892,6 +3902,7 @@ function areaValue(p, id, lv){
     const n = want;
     v = n * (5 + (G.round >= 3 ? 1 : 0)) - n * 3.2;
     if (stratOn()) { const nd = clockNeeds(p); if (nd && nd.prop) v += Math.min(n, nd.prop.left) * AIP.clockProp * 0.6 * clockMul(); }
+    if (stratOn() && AIP.citySpot) v -= Math.max(0, n - goodCitySpots(p)) * AIP.citySpot * (G.round >= 5 ? 0.3 : 1);   // 이미 도시인 덩어리에 붙일 수밖에 없으면 건설을 미룸 (새 도시 자리가 생길 때 지음)
   } else if (a.eff[0].t === 'copy') {
     // 모방 = 카드 1장 + 금 4(+복사한 구역의 자원 비용). 직접 가면 카드 (먼저 간 사람 수 + 1)장이 드므로, 카드 1장을 1.6점으로 보고 비교 (2장 이상 들 때 모방이 이득)
     const cands = copyTargets(p, a.eff[0].cats).filter(k => !uselessReason(p, AREAS[k].eff));
@@ -3948,7 +3959,10 @@ function aiAnswer(pr){
       }
       case 'choice': return chooseOpt(pr, p, lv);
     }
-  } catch (err) { console.error('AI', err); }
+  } catch (err) {
+    console.error('AI', err); (G.flog = G.flog || []).push('[AI 오류] ' + (err && err.message));
+    try { if (pr.type === 'hex' && pr.valid && pr.valid.size) return [...pr.valid][0]; if (pr.type === 'edge' && pr.validEdge === undefined && pr.valid && pr.valid.size) return [...pr.valid][0]; if (pr.type === 'mixed') { if (pr.valid && pr.valid.size) return {hex:[...pr.valid][0]}; if (pr.validEdge && pr.validEdge.size) return {edge:[...pr.validEdge][0]}; } } catch (e2) {}
+  }
   return pr.type === 'choice' ? (enabledOpts(pr)[0] || {value:null}).value : null;
 }
 const _HD = {};
@@ -4332,7 +4346,6 @@ function aiPendPush(up){ try { const a = aiPendGet().concat(up).slice(-12); loca
 async function aiLearnOnEnd(){
   if (!G || G.phase !== 'end' || G.learned) return;
   G.learned = true;
-  if (G.patches && Object.keys(G.patches).length) return;   // 밸런스 패치 게임은 정식 룰이 아니므로 AI 학습에 반영하지 않음
   const humans = G.players.map((p, i) => ({p, i, s:score(p, i).total})).filter(x => !x.p.ai);
   if (!humans.length || !AI_PROFILE) return;
   humans.forEach(h => pstatsUpdate(h.p.name, h.s));
@@ -4409,6 +4422,7 @@ function charFit(p, id, a){
     try { for (const q of clockReqs(p)) { if (q.or) continue; const [n, v, g] = q; if (v >= g) continue; if (/타일/.test(n)) needTerr = true; if (/텐트|하우스|빌딩|건축물|연구소/.test(n)) needProp = true; } } catch(e){}
     for (const e of a.eff) { if (needTerr && (e.t === 'terrain' || e.t === 'terrainRoad')) b += AIP.clockW * clockMul(); if (needProp && e.t === 'prop') b += AIP.clockW * clockMul(); }
   }
+  if (stratOn()) { const pp = portPlan(p); if (pp && pp.n > 0) for (const e of a.eff) if (e.t === 'terrain' || e.t === 'terrainRoad') b += AIP.portAct * Math.min(e.n || 1, pp.n) * portPlanW(); }
   if (stratOn()) { const fp = firstPlan(p); if (fp && fp.n > 0) for (const e of a.eff) if (e.t === 'terrain' || e.t === 'terrainRoad') b += 4 * Math.min(e.n || 1, fp.n); }
   if (stratOn()) { const pl = dzPlan(p); if (pl) for (const e of a.eff) {   // 카드 추가 구역 계획: 타일·도로가 더 필요한 만큼 그 행동 칸 가산
     const n = e.n || 1;
@@ -4486,6 +4500,26 @@ function firstPlan(p){
   if (best) { const T = new Set(); for (let x = best; x && tcost[x] > 0 || (x && !p.tiles[x] && !isCap(x)); x = tprev[x]) { if (!p.tiles[x]) T.add(x); if (!tprev[x]) break; } v = {g:best, T, n:tcost[best]}; }
   p._fp = {key, v}; return v;
 }
+// 항구 계획: 카드 구역을 연 뒤(또는 3라운드부터) 아직 연결 안 된 항구 중 가장 가까운 곳까지 타일 줄을 이어 감 (항구 4개 = -40 → 0점)
+function chainTo(p, targets){
+  const land = k => TERRAIN[tch(p, k)] && !isCap(k);
+  const tcost = {}, tprev = {}, q = [];
+  for (const k of [...CAPITALS, ...[...connectedSet(p)]]) { tcost[k] = 0; q.push(k); }
+  for (let i = 0; i < q.length; i++) { const k = q[i]; for (const n of HEX[k].nb) { if (!land(n)) continue; const c = tcost[k] + (p.tiles[n] ? 0 : 1); if (tcost[n] === undefined || c < tcost[n]) { tcost[n] = c; tprev[n] = k; q.push(n); } } }
+  let best = null;
+  for (const g of targets) if (land(g) && tcost[g] !== undefined && (!best || tcost[g] < tcost[best])) best = g;
+  if (!best) return null;
+  const T = new Set(); for (let x = best, i = 0; x && tcost[x] > 0 && i < 40; x = tprev[x], i++) if (!p.tiles[x]) T.add(x);
+  return {g:best, T, n:tcost[best]};
+}
+function portPlan(p){
+  if (!stratOn() || G.round < 2 || (!p.drawActive.length && G.round < 3)) return null;
+  const key = Object.keys(p.tiles).join(',') + '|' + p.map + G.round; if (p._pp && p._pp.key === key) return p._pp.v;
+  const cs = connectedSet(p), open = PORTS.filter(pt => !pt.hexes.some(h => cs.has(h)));
+  const v = open.length ? chainTo(p, open.flatMap(pt => pt.hexes)) : null;
+  p._pp = {key, v}; return v;
+}
+const portPlanW = () => G.round <= 3 ? 1 : G.round === 4 ? 1.2 : 0.9;
 const dzPlanW = (p) => { const w = G.round === 1 ? 1.3 : G.round === 2 ? 1.15 : G.round === 3 ? 1 : 0.6; return p && FIRST_WONDER.includes(p.char) && G.round <= 2 ? w * 0.45 : w; };
 function dzTargets(p){ return Object.values(HEX).filter(h => h.ch === 'D' && !p.drawActive.includes(h.k)); }
 function clockNeeds(p){   // 시계탑 해금까지 모자란 것
@@ -4548,6 +4582,11 @@ function clusterGain(p, k, type){
   if (merged.has(type)) return -1.5 - (comps.length > 1 ? 0 : 0);  // 같은 종류만 이어 붙임
   return merged.size + 1 >= 3 ? 9 : 3;                             // 도시 완성 / 새 종류 추가
 }
+function goodCitySpots(p){   // 새 도시를 만들거나 도시가 아닌 덩어리를 키울 수 있는 빈 자리 수
+  const valid = propSpots(p, (s, k) => !s.prop); let n = 0;
+  for (const k of valid) if (['tent', 'house', 'building', 'lab', 'coffee'].some(ty => clusterGain(p, k, ty) > 0)) n++;
+  return n;
+}
 function cityFitType(p, type){   // 지금 놓을 수 있는 자리 중 이 종류가 가장 도시에 가까워지는 정도
   const valid = propSpots(p, (s, k) => !s.prop && !(ACT && ACT.flipped && ACT.flipped.has(k)));
   let best = -9; for (const k of valid) best = Math.max(best, clusterGain(p, k, type));
@@ -4587,6 +4626,7 @@ function hexScore(p, k, text){
         const ic = iconsOf(p, k); if (ic && ic.some(e => e.t === 'skill')) s += 7;
         const fp = firstPlan(p); if (fp && fp.T.has(k)) s += 24;
       }
+      { const pp = portPlan(p); if (pp && pp.T.has(k)) s += AIP.portPlan * portPlanW(); }
       for (const d of dzTargets(p)) {
         if (!h.nb.includes(d.k)) continue;
         if (!d.nb.some(n => p.tiles[n])) s += AIP.dz.tile * (d.edges.some(e => p.roads.includes(e)) ? 1.6 : 1);
@@ -4782,6 +4822,7 @@ async function aiTurn(pi){
   }
   // 고급: 건설에 필요한 자원을 금으로 미리 확보
   if (lv === 'adv') { if (stratOn() && G.round === 1 && AIP.openBonus) await aiPrepareOpening(pi); await aiPrepareBuild(pi); }
+  if (lv !== 'beginner' && stratOn()) await aiGoldTopUp(pi, lv);
   p = P(pi);
   const cands = [];
   // 빈 행동칸(첣 칸, 손패 1장)을 우선: 이미 누가 들어간 구역은 들어가는 칸 하나당 점수를 3씩 깎음 (다이아 2개 번영 구역 G는 제외)
@@ -4853,6 +4894,30 @@ async function aiPrepareBuild(pi){
     p._want = null; return;
   }
 }
+// 남는 금으로 모자란 기본 자원을 사서, 지금 할 수 있는 행동보다 더 좋은 행동을 함 (금 4 → 기본 자원 1)
+async function aiGoldTopUp(pi, lv){
+  const p = P(pi); if (!AIP.goldUp || p.res.gold < 8) return;
+  const adj = (id, v) => v == null ? null : v - (DIA_AREAS.includes(id) ? 0 : AIP.cardK * Math.max(0, areaState(id).idx));
+  let base = -Infinity;
+  for (const id of Object.keys(G.areas)) { const v = adj(id, areaValue(p, id, lv)); if (v != null) base = Math.max(base, v); }
+  const cardG = p.hand.map(id => cardOf(id)).filter(c => c && !c.blank && c.cost && c.cost.gold).map(c => cardCost(p, c).gold || 0), cardRes = G.round <= 4 && cardG.length ? Math.min(...cardG) : 0;   // 손패 카드 1장은 쓸 수 있게 금을 남김
+  let best = null;
+  for (const id of Object.keys(G.areas)) {
+    const st = areaState(id); if (!st.open || st.full || canPayArea(p, id)) continue;
+    const cost = areaCost(p, id), need = {}; let d = 0, ok = true;
+    for (const [k, v] of Object.entries(cost)) { const sh = v - (p.res[k] || 0); if (sh <= 0) continue; if (['wheat','wood','iron'].includes(k)) { need[k] = sh; d += sh; } else ok = false; }
+    if (!ok || !d || p.res.gold < d * 4 + 4 + cardRes) continue;
+    for (const [k, n] of Object.entries(need)) p.res[k] += n;
+    const v = adj(id, areaValue(p, id, lv));
+    for (const [k, n] of Object.entries(need)) p.res[k] -= n;
+    if (v == null) continue;
+    const net = v - d * 1.1;
+    if (net > base + 0.8 && (!best || net > best.net)) best = {id, need, net};
+  }
+  if (!best) return;
+  for (const [k, n] of Object.entries(best.need)) { p._want = k; for (let i = 0; i < n; i++) if (P(pi).res.gold >= 4) await freeAction(pi, 'buyRes'); }
+  P(pi)._want = null;
+}
 async function aiBeforePass(pi){
   // 패스 직전: 남는 카드와 디스크를 기본 자원으로 바꿈
   let guard = 0;
@@ -4922,6 +4987,7 @@ function fbMakeDb(fs, dbi){
       const api = {
         orderBy(f, d){ q.ord = [f, d || 'asc']; return api; },
         limit(n){ q.lim = n; return api; },
+        async count(){ return fs.getCountFromServer ? (await fs.getCountFromServer(fs.collection(dbi, name))).data().count : null; },
         onSnapshot(ok, err){
           const cs = []; if (q.ord) cs.push(fs.orderBy(q.ord[0], q.ord[1])); if (q.lim) cs.push(fs.limit(q.lim));
           return fs.onSnapshot(fs.query(fs.collection(dbi, name), ...cs),
@@ -5427,7 +5493,7 @@ function netPush(){
   if (!G || G.mode !== 'online' || !NET.db || !NET.code) return;
   if (G.log.length > 150) G.log.length = 150;
   NET.ver = Math.max(NET.ver, 0) + 1;
-  const data = {state:JSON.stringify(G), ver:NET.ver, at:Date.now(), round:G.round, phase:G.phase};
+  const data = {state:JSON.stringify(stableG()), ver:NET.ver, at:Date.now(), round:G.round, phase:G.phase};
   const code = NET.code;
   NET.chain = NET.chain.then(() => NET.db.doc('states/' + code).set(data)).catch(e => { console.error(e); toast('게임 상태를 저장하지 못했습니다'); });
   if (G.phase === 'end') aiLearnOnEnd();
@@ -5543,6 +5609,8 @@ const BAL_PATCHES = [
   {id:'sea3', label:'바다 타일 보상 상향', desc:'바다 타일을 뒤집을 때 금 수입 +2 → +3'},
   {id:'invest', label:'투자 기술 타일 상향', desc:'고급 기술 타일 \'투자\'가 금 수입 +5에 더해 금 3도 받음'},
   {id:'ema2', label:'에마 미깡 상향', desc:'시민 카드 \'에마 미깡\'의 비용이 금 수입 3 → 2 지불로 줄어듦 (도시 점수 1)'},
+  {id:'road3', label:'도로 공사 변경', desc:'고급 기술 타일 \'도로 공사\': 도로 행동(D) 목재 6 → 3 고정 대신, 도로를 놓는 모든 행동(도로 D·대개척 M, 복사 포함)의 목재 비용 3 할인'},
+  {id:'reclaim2', label:'개간 사업 변경', desc:'고급 기술 타일 \'개간 사업\': 개간 행동(A) 밀 6 → 4 고정 대신, 지형 타일을 놓는 모든 행동(개간 A·대개척 M, 복사 포함)의 밀 비용 2 할인'},
   // {id:'예시', label:'패치 이름', desc:'내용 설명'},
 ];
 const balOn = id => !!(G && G.patches && G.patches[id]);
@@ -5614,7 +5682,7 @@ function renderSetup(){
       <small class="muted">놓는 자리 ${AI_PROFILE && AI_PROFILE.plc ? Math.round(AI_PROFILE.plc.n) : 0}건 · <button type="button" class="btn ghost" data-a="aiexport" style="padding:2px 10px;font-size:12px">학습 데이터 내보내기</button> <button type="button" class="btn ghost" data-a="aiimport" style="padding:2px 10px;font-size:12px">불러오기</button><input type="file" id="aiimpfile" accept=".json,application/json" hidden>${AI_NET_ERR ? `<br><span style="color:#c0392b">⚠ 서버 저장 오류 — ${esc(AI_NET_ERR)}</span>` : ''}</small>
       </div>
       <label class="advopt"><input type="checkbox" id="advsk" ${SETUP.adv?'checked':''}> 변형 규칙: 고급 기술 타일 사용 (인원+1장 공개, 기술 타일을 얻을 때 다이아 1개로 대신 가져가기)</label>
-      <label class="advopt"><input type="checkbox" id="patchmode" ${SETUP.patchMode?'checked':''}> 밸런스 패치 모드 (정식 룰이 아닌 자체 조정 — 기록에 표시되고 AI 학습에는 반영되지 않습니다)</label>
+      <label class="advopt"><input type="checkbox" id="patchmode" ${SETUP.patchMode?'checked':''}> 밸런스 패치 모드 (정식 룰이 아닌 자체 조정 — 기록에 표시되고 AI 학습에도 반영됩니다)</label>
       ${SETUP.patchMode ? (BAL_PATCHES.length ? BAL_PATCHES.map(b => `<label class="advopt sub"><input type="checkbox" class="balp" data-id="${b.id}" ${SETUP.patches[b.id]?'checked':''}> ${esc(b.label)}${b.desc ? ` — <small>${esc(b.desc)}</small>` : ''}</label>`).join('') : '<small class="muted">등록된 패치가 아직 없습니다.</small>') : ''}
       ${online ? (NET.db ? `${NET.canWrite === false ? '<p class="warnbox">보기 전용 권한이라 방을 만들 수 없습니다. 방을 만든 사람이 이 계정을 "편집 가능" 권한으로 초대해야 합니다.</p>' : ''}<button class="btn primary wide" data-a="ocreate" ${NET.canWrite === false ? 'disabled' : ''}>온라인 게임 만들기</button>` : '') : `<button class="btn primary wide" data-a="start">게임 시작</button>`}
     </div>
@@ -6321,8 +6389,8 @@ const ADV_TILE = {
   110: {abil:['inf'],  body:() => `${ic('card')}<span class="all">All</span><span class="pr">(</span>${tagQ(null, 'brownie')}<span class="pr">×−1</span>${ic('gold')}<span class="pr">)</span>`},
   111: {abil:['inf','bolt'], body:() => `<span class="plus1">+1</span><span class="vbar"></span>${ic('draw')}${ic('auto1')}`},
   112: {abil:['inf'],  body:() => grp(PLAYED_CARD) + grp(AW('cond'), q(2, 'vp'))},
-  113: {abil:['inf'],  body:() => grp(replCost(3, 6), ic('wood')) + grp(AW('pay'), q(3, 'road'))},
-  114: {abil:['inf'],  body:() => grp(replCost(4, 6), ic('wheat')) + grp(AW('pay'), hexQ(3))},
+  113: {abil:['inf'],  body:() => balOn('road3') ? grp(`<span class="repl" title="목재 비용 3 할인"><b class="rn">−3</b></span>`, ic('wood')) + grp(AW('pay'), ic('road')) : grp(replCost(3, 6), ic('wood')) + grp(AW('pay'), q(3, 'road'))},
+  114: {abil:['inf'],  body:() => balOn('reclaim2') ? grp(`<span class="repl" title="밀 비용 2 할인"><b class="rn">−2</b></span>`, ic('wheat')) + grp(AW('pay'), hexQ('')) : grp(replCost(4, 6), ic('wheat')) + grp(AW('pay'), hexQ(3))},
 };
 function advTile(id){
   const spec = ADV_TILE[id], s = skillDef(id); if (!spec || !s) return '';
@@ -6330,7 +6398,7 @@ function advTile(id){
 }
 function renderPatchNotes(){
   $app().innerHTML = `<div class="setup"><div class="panel"><h3>밸런스 패치 내역 (${BAL_PATCHES.length}건)</h3>
-    <p class="muted">정식 룰이 아니라 자체적으로 조정한 내용입니다. 새 게임 설정에서 '밸런스 패치 모드'를 켜고 원하는 패치를 골라 적용합니다. 패치를 켠 게임은 AI 학습에 반영되지 않습니다.</p>
+    <p class="muted">정식 룰이 아니라 자체적으로 조정한 내용입니다. 새 게임 설정에서 '밸런스 패치 모드'를 켜고 원하는 패치를 골라 적용합니다. 패치를 켠 게임도 AI 학습에 반영됩니다.</p>
     ${BAL_PATCHES.length ? BAL_PATCHES.map((b, i) => `<div class="panel" style="margin:8px 0"><b>${i + 1}. ${esc(b.label)}</b>${b.desc ? `<p class="muted" style="margin:4px 0 0">${esc(b.desc)}</p>` : ''}</div>`).join('') : '<p class="muted">등록된 패치 내역이 아직 없습니다.</p>'}
     <button class="btn ghost wide" data-a="gback">설정으로 돌아가기</button></div></div>`;
 }
